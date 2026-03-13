@@ -36,8 +36,8 @@ const FAQSection = () => {
     <section className="w-full" style={{ backgroundColor: "#14A7C9" }}>
       <div className="mx-auto max-w-[1200px] px-6 py-16 md:py-20 lg:py-24">
         <h2
-          className="font-display text-6xl md:text-7xl lg:text-8xl font-bold uppercase text-center mb-12 md:mb-16"
-          style={{ color: "#000" }}
+          className="font-display text-6xl text-white md:text-7xl lg:text-8xl font-bold uppercase text-center mb-12 md:mb-16"
+          // style={{ color: "#000" }}
         >
           FAQ
         </h2>

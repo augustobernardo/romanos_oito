@@ -11,7 +11,7 @@ import ClosingQuoteSection from "@/components/oikos/ClosingQuoteSection";
 
 const OikosLanding = () => {
   return (
-    <div className="w-full min-h-screen" style={{ backgroundColor: "#F2EDE4" }}>
+    <div className="w-full min-h-screen" style={{ backgroundColor: "##fff9e1" }}>
       <HeroSection />
       <HeadlineSection />
       <WhatIsOikosSection />
