@@ -1,8 +1,8 @@
-import prayingGirl from "@/assets/oikos/praying-girl.jpg";
+import prayingGirl from "@/assets/oikos/BEA _FOTO.png";
 
 const WhoCanParticipateSection = () => {
   return (
-    <section className="w-full" style={{ backgroundColor: "#F2EDE4" }}>
+    <section className="w-full" style={{ backgroundColor: "#fff9e1" }}>
       <div className="mx-auto max-w-[1200px] px-6 py-16 md:py-20 lg:py-24">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-start">
           {/* Left column - Text */}
@@ -15,7 +15,7 @@ const WhoCanParticipateSection = () => {
               <br />
               PARTICIPAR?
             </h2>
-            <div className="space-y-4 text-sm md:text-base leading-relaxed" style={{ color: "#333" }}>
+            <div className="text-lg md:text-xl lg:text-2xl leading-relaxed font-medium" style={{ color: "#333" }}>
               <p>
                 Para aquele jovem que nunca teve contato com a
                 Igreja, a uma experiência de encontro com Deus, assim
@@ -33,12 +33,12 @@ const WhoCanParticipateSection = () => {
 
           {/* Right column - Image */}
           <div className="flex justify-center md:justify-end">
-            <div className="w-full max-w-[380px] rounded-[20px] overflow-hidden shadow-lg" style={{ aspectRatio: "4/5" }}>
+            <div className="w-full max-w-[380px] rounded-[20px] overflow-hidden">
               <img
                 src={prayingGirl}
                 alt="Jovem em oração"
                 className="w-full h-full object-cover"
-                loading="lazy"
+                // loading="lazy"
               />
             </div>
           </div>

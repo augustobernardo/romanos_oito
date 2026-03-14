@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, CreditCard } from "lucide-react";
 
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import Header from "@/components/home/Header";
+import Footer from "@/components/home/Footer";
 import { Button } from "@/components/ui/button";
 import {
   STRIPE_PAYMENT_LINK_URL,

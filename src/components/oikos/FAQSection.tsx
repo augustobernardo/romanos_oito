@@ -3,29 +3,54 @@ import { ChevronDown } from "lucide-react";
 
 const faqItems = [
   {
-    question: "Qual a idade mínima para participar?",
+    question: "Quais os dias do encontro? E qual o horário de início na sexta-feira?",
     answer:
-      "O OIKOS é destinado a jovens de 17 a 25 anos. Essa faixa etária foi pensada para otimizar a experiência e o conteúdo desenvolvido durante o retiro.",
+      "O OIKOS vai acontecer nos dias 5, 6 e 7 de Junho (sexta, sábado e domingo). Na sexta-feira é provavel que inicie às 16h com check-in.",
   },
   {
-    question: "Preciso ser católico para participar?",
+    question: "Eu trabalho no sábado de manhã. Posso participar?",
     answer:
-      "Não necessariamente! O OIKOS é aberto a todos os jovens que desejam viver uma experiência de encontro com Deus, independente de sua religião ou grau de proximidade com a fé.",
+      "Depente. Recomendamos que diante da antecedência da sua inscrição seja possível que busce junto ao seu trabalho uma folga ou compensão na carga horário fazendo hora extra.",
   },
   {
-    question: "O que levar para o retiro?",
+    question: "De onde sai para o local do retiro?",
     answer:
-      "Roupas confortáveis, itens de higiene pessoal, protetor solar, roupa de cama (lençol e travesseiro), Bíblia e caderno para anotações. Uma lista completa será enviada após a inscrição.",
+      "SAÍDA: Av. Roma, 425 - Grã-Duquesa (Paróquia Cristo Redentor)",
   },
   {
-    question: "Como funciona a alimentação?",
+    question: "O que está incluso na inscrição?",
     answer:
-      "Todas as refeições estão inclusas no valor da inscrição. Caso tenha alguma restrição alimentar, informe no formulário de inscrição.",
+      "TRANSPORTE, ALIMENTAÇÃO & KIT OIKOS (Camisa e brindes) (O transporte incluso é IDA para o local do retiro saindo da Paróquia Cristo Redentor e o RETORNO ao final do retiro para o mesmo local de saída, Paróquia Cristo Redentor);",
   },
   {
-    question: "Posso parcelar o pagamento?",
+    question: "O OIKOS é de dormir?",
     answer:
-      "Sim! Oferecemos opções de parcelamento no cartão de crédito. As condições variam conforme o lote escolhido.",
+      "Sim. O encontro funciona no formato de pernoite!",
+  },
+  {
+    question: "O que é preciso levar para pernoite?",
+    answer:
+      "Roupa de cama e banho, itens de hiegene pessoal, roupas confortáveis;",
+  },
+  {
+    question: "Como funciona a política de cancelamento/desistência da inscrição para o OIKOS?",
+    answer:
+      "Em caso de desistência será feito o estorno de apenas de 20% do valor da inscrição devido ao pedido das camisas e outros itens junto aos fornecedores. Para desistência faça contato com SAC do ROMANOS 8: +55 33 9842-7416",
+  },
+  {
+    question: "Posso transferir minha inscrição para outra pessoa?",
+    answer:
+      "Sim. A titularidade da inscrição é TRANSFERÍVEL, podendo em caso de desistência ser repassada a sua vaga para outra pessoa. Para isto, se faz necessário fazer contato com número do SAC: +55 33 9842-7416",
+  },
+  {
+    question: "Após preencher o formulário já estou automaticamente inscrito?",
+    answer:
+      "Não. Sua inscrição SÓ SERÁ REALMENTE EFETIVADA APÓS O PAGAMENTO! Sendo assim, apenas preencher este formulário NÃO GARANTE SUA VAGA! ",
+  },
+  {
+    question: "Sou de outra cidade. Posso participar do retiro?",
+    answer:
+      "Sim, porém está sujeito à avaliação posterior. O OIKOS tem intenção de captar o máximo de pessoas que após a experiência estejam próximas à missão e possam caminhar conosco. Logo, morar em outra cidade/estado prejudica parcialmente a experiência pós-OIKOS.",
   },
 ];
 
@@ -36,8 +61,7 @@ const FAQSection = () => {
     <section className="w-full" style={{ backgroundColor: "#14A7C9" }}>
       <div className="mx-auto max-w-[1200px] px-6 py-16 md:py-20 lg:py-24">
         <h2
-          className="font-display text-6xl text-white md:text-7xl lg:text-8xl font-bold uppercase text-center mb-12 md:mb-16"
-          // style={{ color: "#000" }}
+          className="font-display text-6xl text-[#fff9e1] md:text-7xl lg:text-8xl font-bold uppercase text-center mb-12 md:mb-16"
         >
           FAQ
         </h2>
@@ -53,7 +77,7 @@ const FAQSection = () => {
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
                 className="w-full flex items-center justify-between px-6 py-5 text-left"
               >
-                <span className="font-display text-base md:text-lg font-bold uppercase text-white pr-4">
+                <span className="font-sans text-base md:text-lg font-bold text-[#fff9e1] pr-4">
                   {item.question}
                 </span>
                 <ChevronDown

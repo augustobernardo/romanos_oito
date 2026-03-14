@@ -1,55 +1,66 @@
-import ovalImages from "@/assets/oikos/oval-images.png";
-import whatIsOikosImg from "@/assets/oikos/COPY_SS02.png";
+import whatIsOikosDesktop from '@/assets/oikos/desktop/DESKTOP_SS_02_03.png'
+import newAgeDesktopImage from '@/assets/oikos/desktop/DESKTOP_NOIVAS.png'
+import whatIsOikosMobile from '@/assets/oikos/mobile/MOBILE_SS_02__SS_03__SS_04_edit.png'
+import newAgeMobileImage from '@/assets/oikos/mobile/MOBILE_NOIVAS.png'
+import btnMySubscript from '@/assets/oikos/BOTAO_FACA_INSC.png'
 
 const WhatIsOikosSection = () => {
   return (
-    <section className="relative w-full overflow-hidden min-h-[70vh] md:min-h-[80vh]" style={{ backgroundColor: "#4ade80" }}>
-      <div className="relative z-10 mx-auto max-w-[1200px] px-6 py-20 md:py-32 lg:py-56"> 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center justify-items-center text-center md:text-left">
-          {/* Left column */}
-          <div>
-            <h2
-              className="font-display text-3xl md:text-4xl lg:text-5xl font-bold uppercase leading-none mb-4 text-white"
-            >
-              O QUE É
-              <br />
-              O OIKOS?
-            </h2>
-            <p className="text-white text-sm md:text-base leading-relaxed">
-              O OIKOS é a nossa experiência de primeiro anúncio para jovens.
-            </p>
-          </div>
-
-          {/* Right column */}
-          <div className="flex items-start">
-            <p className="text-white text-sm md:text-base leading-relaxed">
-              Ele nasce diante da necessidade de alargar as frontas do nosso
-              movimento, trazer novos corações e um ar novo para dentro de
-              nossas casas... buscando um novo rumo e novas trilhas
-              para manifestarem a glória de Deus ao mundo.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Oval images strip */}
-      {/* <div className="relative w-full flex justify-center z-10">
+    // <section className="relative w-full overflow-hidden bg-secondary text-[#fffbeb] p-8 md:p-16 lg:p-24" style={{ backgroundColor: "#4ade80" }}>
+    //   <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+    //     <img
+    //       src={ovalImages}
+    //       alt=""
+    //       className="w-full h-full object-cover object-center opacity-90"
+    //       // loading="lazy"
+    //     />
+    //   </div>
+    //   <div className="relative z-10 max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+    //     <div>
+    //       <h2 className="font-display text-6xl md:text-7xl lg:text-8xl mb-6 uppercase leading-[0.9] tracking-normal">
+    //         O que é<br />o Oikos?
+    //       </h2>
+    //       <p className="text-xl md:text-2xl font-bold max-w-md leading-snug">
+    //         O OIKOS é a nossa experiência de primeiro anúncio para jovens.
+    //       </p>
+    //     </div>
+    //     <div>
+    //       <p className="text-lg md:text-xl lg:text-2xl leading-relaxed font-medium">
+    //         Ele nasce diante da necessidade de alargar as tendas de nosso
+    //         movimento, trazer novos corações e um ar novo para dentro de nossa
+    //         casa, incendiar um novo povo e novos filhos para manifestarem a
+    //         glória de Deus ao mundo.
+    //       </p>
+    //     </div>
+    //   </div>
+    // </section>
+    <section className="w-full">
+      <picture>
+        <source media="(max-width: 767px)" srcSet={whatIsOikosMobile} />
         <img
-          src={whatIsOikosImg}
-          alt="O que é o OIKOS? O OIKOS é a nossa experiência de primeiro anúncio para jovens."
-          // className="w-full max-w-[900px] h-auto block"
-          loading="lazy"
+          src={whatIsOikosDesktop}
+          alt="O que é o OIKOS?"
         />
-      </div> */}
-      {/* Oval images background */}
-      <div className="absolute inset-0 flex justify-center items-center pointer-events-none w-full z-0">
+      </picture>
+
+      <a href='#inscricao'>
+        <picture>
+          <source media="(max-width: 767px)" srcSet={btnMySubscript} />
+          <img
+            src={btnMySubscript}
+            alt="Vamos viver o melhor final de semana da sua vida?"
+            className='pb-3 cursor-pointer' />
+        </picture>
+      </a>
+
+      <picture>
+        <source media="(max-width: 767px)" srcSet={newAgeMobileImage} />
         <img
-          src={ovalImages}
-          alt="Momentos de oração e adoração no OIKOS"
-          className="max-w-none opacity-90 h-auto block w-full"
-          loading="lazy"
+          src={newAgeDesktopImage}
+          alt="O que é o OIKOS?"
+          className='pb-12'
         />
-      </div>
+      </picture>
     </section>
   );
 };

@@ -3,8 +3,8 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import Header from "@/components/home/Header";
+import Footer from "@/components/home/Footer";
 import { Button } from "@/components/ui/button";
 import supabase from "@/utils/supabase";
 

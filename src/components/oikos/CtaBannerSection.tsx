@@ -1,4 +1,4 @@
-import worshipScene from "@/assets/oikos/worship-scene.jpg";
+import ctaBanner from "@/assets/oikos/cta_banner.jpeg";
 
 const CtaBannerSection = () => {
   return (
@@ -6,9 +6,9 @@ const CtaBannerSection = () => {
       {/* Background image */}
       <div className="absolute inset-0">
         <img
-          src={worshipScene}
+          src={ctaBanner}
           alt=""
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover object-[center_35%]"
           loading="lazy"
         />
         <div className="absolute inset-0 bg-black/60" />
@@ -16,7 +16,7 @@ const CtaBannerSection = () => {
 
       <div className="relative z-10 px-20">
         <div className="flex flex-col md:flex-row items-center justify-between gap-10">
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-display text-[#7EF17F] max-w-3xl uppercase font-bold leading-tight tracking-tight">
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-display text-[#7EF17F] max-w-3xl uppercase font-thin leading-tight tracking-wide">
             Vamos viver o melhor <br /> fim de semana da sua vida?
           </h2>
         <a

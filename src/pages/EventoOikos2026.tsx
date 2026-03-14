@@ -5,8 +5,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckCircle, ArrowLeft } from "lucide-react";
 
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import Header from "@/components/home/Header";
+import Footer from "@/components/home/Footer";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
@@ -21,7 +21,6 @@ import VidaIgrejaSection from "@/components/form/VidaIgrejaSection";
 import EmergenciaSection from "@/components/form/EmergenciaSection";
 import CamisaSection from "@/components/form/CamisaSection";
 import ExpectativaSection from "@/components/form/ExpectativaSection";
-
 
 const calculateAge = (birthday: string) => {
   const today = new Date();
@@ -81,35 +80,37 @@ const EventoOikos2026 = () => {
   };
 
   const handleSubmit = async (data: FormData) => {
-    const { data: insertedData, error } = await supabase.from("inscricoes").insert({
-      lote_id: loteSelecionado!,
-      evento_id: "a4a01143-0560-44ea-88cd-735f7b29bf25",
-      nome: data.nome,
-      data_nascimento: data.dataNascimento,
-      telefone: data.telefone.replace(/\D/g, ""),
-      instagram: data.instagram,
-      comunidade: data.comunidade,
-      cidade_estado: data.cidadeEstado,
-      endereco_completo: data.enderecoCompleto,
-      como_conheceu: data.comoConheceu,
-      como_conheceu_outro: data.comoConheceuOutro || null,
-      nome_mae: data.nomeMae,
-      numero_mae: data.numeroMae,
-      nome_pai: data.nomePai,
-      numero_pai: data.numeroPai,
-      numero_responsavel_proximo: data.numeroResponsavelProximo || null,
-      is_catolico: data.isCatolico,
-      is_catolico_outro: data.isCatolicoOutro || null,
-      participa_movimento: data.participaMovimento,
-      fez_retiro: data.fezRetiro,
-      fez_retiro_outro: data.fezRetiroOutro || null,
-      nome_pessoa_emergencia: data.nomePessoaEmergencia,
-      grau_parentesco_emergencia: data.grauParentescoEmergencia,
-      numero_emergencia: data.numeroEmergencia,
-      tamanho_camisa: data.tamanhoCamisa,
-      expectativa_oikos: data.expectativaOikos || null,
-      idade: calculateAge(data.dataNascimento)
-    });
+    const { data: insertedData, error } = await supabase
+      .from("inscricoes")
+      .insert({
+        lote_id: loteSelecionado!,
+        evento_id: "a4a01143-0560-44ea-88cd-735f7b29bf25",
+        nome: data.nome,
+        data_nascimento: data.dataNascimento,
+        telefone: data.telefone.replace(/\D/g, ""),
+        instagram: data.instagram,
+        comunidade: data.comunidade,
+        cidade_estado: data.cidadeEstado,
+        endereco_completo: data.enderecoCompleto,
+        como_conheceu: data.comoConheceu,
+        como_conheceu_outro: data.comoConheceuOutro || null,
+        nome_mae: data.nomeMae,
+        numero_mae: data.numeroMae,
+        nome_pai: data.nomePai,
+        numero_pai: data.numeroPai,
+        numero_responsavel_proximo: data.numeroResponsavelProximo || null,
+        is_catolico: data.isCatolico,
+        is_catolico_outro: data.isCatolicoOutro || null,
+        participa_movimento: data.participaMovimento,
+        fez_retiro: data.fezRetiro,
+        fez_retiro_outro: data.fezRetiroOutro || null,
+        nome_pessoa_emergencia: data.nomePessoaEmergencia,
+        grau_parentesco_emergencia: data.grauParentescoEmergencia,
+        numero_emergencia: data.numeroEmergencia,
+        tamanho_camisa: data.tamanhoCamisa,
+        expectativa_oikos: data.expectativaOikos || null,
+        idade: calculateAge(data.dataNascimento),
+      });
 
     if (error) {
       toast({
@@ -145,7 +146,8 @@ const EventoOikos2026 = () => {
               Inscrição Confirmada!
             </h1>
             <p className="mt-4 text-muted-foreground">
-              Obrigado por se inscrever! Você receberá uma mensagem pelo Whatsapp informado com mais informações.
+              Obrigado por se inscrever! Você receberá uma mensagem pelo
+              Whatsapp informado com mais informações.
             </p>
             <div className="mt-8 flex gap-4 justify-center">
               <Button variant="outline" onClick={() => navigate("/eventos")}>
@@ -168,8 +170,16 @@ const EventoOikos2026 = () => {
         {/* Hero */}
         <section className="bg-gradient-hero py-12 md:py-16">
           <div className="container mx-auto px-4 text-center md:px-6">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-              <Button variant="ghost" className="mb-4" onClick={() => navigate("/eventos")}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <Button
+                variant="ghost"
+                className="mb-4"
+                onClick={() => navigate("/eventos")}
+              >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Voltar aos Eventos
               </Button>
@@ -192,7 +202,9 @@ const EventoOikos2026 = () => {
               viewport={{ once: true }}
               className="mx-auto max-w-2xl text-center"
             >
-              <h2 className="mb-2 font-display text-2xl font-bold text-foreground">Selecione o Lote</h2>
+              <h2 className="mb-2 font-display text-2xl font-bold text-foreground">
+                Selecione o Lote
+              </h2>
               <p className="mb-6 text-sm text-muted-foreground">
                 Escolha o lote disponível para prosseguir com a inscrição.
               </p>
@@ -209,7 +221,8 @@ const EventoOikos2026 = () => {
               </div>
               {!loteDisponivelId && (
                 <p className="mt-4 text-sm font-medium text-destructive">
-                  Todos os lotes estão esgotados. As inscrições foram encerradas.
+                  Todos os lotes estão esgotados. As inscrições foram
+                  encerradas.
                 </p>
               )}
             </motion.div>
@@ -218,17 +231,17 @@ const EventoOikos2026 = () => {
 
         {/* Form */}
         {loteSelecionado && (
-            <section className="bg-card py-12 md:py-16">
-              <div className="container mx-auto px-4 md:px-6">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4 }}
-                  className="mx-auto max-w-2xl"
-                >
-                  <h2 className="mb-8 text-center font-display text-2xl font-bold text-foreground">
-                    Formulário de Inscrição
-                  </h2>
+          <section className="bg-card py-12 md:py-16">
+            <div className="container mx-auto px-4 md:px-6">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+                className="mx-auto max-w-2xl"
+              >
+                <h2 className="mb-8 text-center font-display text-2xl font-bold text-foreground">
+                  Formulário de Inscrição
+                </h2>
 
                 <Form {...form}>
                   <div className="space-y-6">
@@ -239,14 +252,18 @@ const EventoOikos2026 = () => {
                     <CamisaSection form={form} />
                     <ExpectativaSection form={form} />
 
-                      <Button onClick={() => handleSubmit(form.getValues())} size="lg" className="w-full shadow-soft">
-                        Confirmar Inscrição
-                      </Button>
-                    </div>
-                  </Form>
-                </motion.div>
-              </div>
-            </section>
+                    <Button
+                      onClick={() => handleSubmit(form.getValues())}
+                      size="lg"
+                      className="w-full shadow-soft"
+                    >
+                      Confirmar Inscrição
+                    </Button>
+                  </div>
+                </Form>
+              </motion.div>
+            </div>
+          </section>
         )}
       </main>
       <Footer />

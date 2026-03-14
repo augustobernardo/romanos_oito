@@ -8,13 +8,13 @@ interface Lote {
 }
 
 const lotes: Lote[] = [
-  { id: 1, name: "1° LOTE", price: "R$ 170,00", status: "sold_out" },
-  { id: 2, name: "2° LOTE", price: "R$ 190,00", status: "available" },
-  { id: 3, name: "3° LOTE", price: "R$ 210,00", status: "upcoming" },
+  { id: 1, name: "1° LOTE", price: "R$ 125,00", status: "upcoming" },
+  { id: 2, name: "2° LOTE", price: "R$ 135,00", status: "upcoming" },
+  { id: 3, name: "3° LOTE", price: "R$ 150,00", status: "upcoming" },
 ];
 
 const TicketSelector = () => {
-  const [selectedLote, setSelectedLote] = useState<number>(2);
+  const [selectedLote, setSelectedLote] = useState<number>(1);
 
   return (
     <section id="inscricao" className="w-full" style={{ backgroundColor: "#f5f5f5" }}>
@@ -38,7 +38,7 @@ const TicketSelector = () => {
             return (
               <button
                 key={lote.id}
-                onClick={() => !isSoldOut && !isUpcoming && setSelectedLote(lote.id)}
+                // onClick={() => !isSoldOut && !isUpcoming && setSelectedLote(lote.id)}
                 disabled={isSoldOut || isUpcoming}
                 className={`relative rounded-2xl p-6 md:p-8 text-center transition-all duration-300 border-2 ${
                   isSelected
