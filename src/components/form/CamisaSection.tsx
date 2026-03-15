@@ -31,7 +31,7 @@ const CamisaSection = ({ form }: Props) => (
       name="tamanhoCamisa"
       render={({ field }) => (
         <FormItem>
-          <FormLabel>Tamanho da Camisa: *</FormLabel>
+          <FormLabel className="font-bold">Tamanho da Camisa: *</FormLabel>
           <FormControl>
             <RadioGroup
               onValueChange={field.onChange}
@@ -43,7 +43,7 @@ const CamisaSection = ({ form }: Props) => (
                   <FormControl>
                     <RadioGroupItem value={size} />
                   </FormControl>
-                  <FormLabel className="font-normal">{size}</FormLabel>
+                  <FormLabel className="font-medium">{size}</FormLabel>
                 </FormItem>
               ))}
             </RadioGroup>
@@ -57,7 +57,7 @@ const CamisaSection = ({ form }: Props) => (
       control={form.control}
       name="cienteTrocaCamisa"
       render={({ field }) => (
-        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-border p-4 bg-muted/30">
+        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-border p-4 bg-[#fae9e9]/30">
           <FormControl>
             <Checkbox checked={field.value} onCheckedChange={field.onChange} />
           </FormControl>

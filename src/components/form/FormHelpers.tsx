@@ -27,7 +27,7 @@ export const PhoneInputField = ({ form, name, label, placeholder = "(00) 00000-0
     name={name}
     render={({ field }) => (
       <FormItem>
-        <FormLabel>{label}</FormLabel>
+        <FormLabel className="font-bold">{label}</FormLabel>
         <FormControl>
           <Input
             placeholder={placeholder}
@@ -73,7 +73,7 @@ export const RadioOptionGroup = ({
       name={name}
       render={({ field }) => (
         <FormItem>
-          <FormLabel>{label}</FormLabel>
+          <FormLabel className="font-bold">{label}</FormLabel>
           <FormControl>
             <RadioGroup
               onValueChange={(value) => {
@@ -90,7 +90,7 @@ export const RadioOptionGroup = ({
                   <FormControl>
                     <RadioGroupItem value={opt.value} />
                   </FormControl>
-                  <FormLabel className="font-normal">{opt.label}</FormLabel>
+                  <FormLabel className="font-medium">{opt.label}</FormLabel>
                 </FormItem>
               ))}
             </RadioGroup>
@@ -106,7 +106,7 @@ export const RadioOptionGroup = ({
         name={outroName}
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Especifique:</FormLabel>
+            <FormLabel className="font-bold">Especifique:</FormLabel>
             <FormControl>
               <Input placeholder="Digite aqui..." {...field} />
             </FormControl>
@@ -121,7 +121,7 @@ export const RadioOptionGroup = ({
 // Section wrapper
 export const FormSection = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <div className="space-y-4 pt-4">
-    <h3 className="font-display text-lg font-bold text-foreground">{title}</h3>
+    <h3 className="font-display text-2xl font-thin uppercase text-[#393939]">{title}</h3>
     {children}
   </div>
 );

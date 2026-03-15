@@ -19,11 +19,11 @@ const ExpectativaSection = ({ form }: Props) => (
     name="expectativaOikos"
     render={({ field }) => (
       <FormItem>
-        <FormLabel>
+        <FormLabel className="font-bold">
           Qual sua expectativa para o OIKOS 2026? Nos vemos em breve. Que venha o OIKOS! 🔥
         </FormLabel>
         <FormControl>
-          <Textarea placeholder="Conte-nos o que você espera para o retiro..." className="resize-none" {...field} />
+          <Textarea placeholder="Conte-nos o que você espera para o retiro..." className="resize-none focus-visible:ring-2 focus-visible:ring-[#3b82f6]" {...field} />
         </FormControl>
         <FormMessage />
       </FormItem>

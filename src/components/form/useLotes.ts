@@ -17,6 +17,7 @@ export const useLotes = (): { lotes: LoteInfo[]; loading: boolean } => {
         setLotes(
           data.map((l: any) => ({
             id: l.id,
+            id_payment_link: l.id_payment_link,
             nome: l.nome,
             preco: l.preco,
             status: l.status as "disponivel" | "esgotado",
@@ -34,6 +35,14 @@ export const useLotes = (): { lotes: LoteInfo[]; loading: boolean } => {
 export const getLoteDisponivel = (lotes: LoteInfo[]): number | null => {
   for (const lote of lotes) {
     if (lote.status === "disponivel") return lote.id;
+  }
+  return null;
+};
+
+export const getLoteDisponivelPaymentLink = (lotes: LoteInfo[], loteId: number): string | null => {
+  const lote = lotes.find((l) => l.id === loteId);
+  if (lote && lote.status === "disponivel") {
+    return lote.id_payment_link;
   }
   return null;
 };

@@ -34,7 +34,7 @@ const VidaIgrejaSection = ({ form }: Props) => (
       name="participaMovimento"
       render={({ field }) => (
         <FormItem>
-          <FormLabel>
+          <FormLabel className="font-bold">
             Participa de algum movimento na Igreja (EAC, Grupo de Jovens, GO, RCC, Vicentinos, etc)? *
           </FormLabel>
           <FormControl>

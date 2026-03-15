@@ -14,6 +14,8 @@ interface Props {
   form: UseFormReturn<FormData>;
 }
 
+const maxAge = "2009-06-04";
+
 const DadosPessoaisSection = ({ form }: Props) => (
   <>
     <FormField
@@ -21,7 +23,7 @@ const DadosPessoaisSection = ({ form }: Props) => (
       name="nome"
       render={({ field }) => (
         <FormItem>
-          <FormLabel>Nome Completo: *</FormLabel>
+          <FormLabel className="font-bold">Nome Completo: *</FormLabel>
           <FormControl>
             <Input placeholder="Seu nome completo" {...field} />
           </FormControl>
@@ -36,9 +38,9 @@ const DadosPessoaisSection = ({ form }: Props) => (
         name="dataNascimento"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Data de Nascimento: *</FormLabel>
+            <FormLabel className="font-bold">Data de Nascimento: *</FormLabel>
             <FormControl>
-              <Input type="date" {...field} />
+              <Input type="date" max={maxAge} {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -50,7 +52,7 @@ const DadosPessoaisSection = ({ form }: Props) => (
         name="instagram"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>@ do Instagram: *</FormLabel>
+            <FormLabel className="font-bold">@ do Instagram: *</FormLabel>
             <FormControl>
               <Input placeholder="Ex: romanos8.mov" {...field} />
             </FormControl>
@@ -66,7 +68,7 @@ const DadosPessoaisSection = ({ form }: Props) => (
         name="comunidade"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Comunidade/Paróquia: *</FormLabel>
+            <FormLabel className="font-bold">Comunidade/Paróquia: *</FormLabel>
             <FormControl>
               <Input placeholder="Nome da sua comunidade ou paróquia" {...field} />
             </FormControl>
@@ -79,7 +81,7 @@ const DadosPessoaisSection = ({ form }: Props) => (
         name="cidadeEstado"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Cidade e Estado: *</FormLabel>
+            <FormLabel className="font-bold">Cidade e Estado: *</FormLabel>
             <FormControl>
               <Input placeholder="Ex: Governador Valadares, Minas Gerais" {...field} />
             </FormControl>
@@ -94,7 +96,7 @@ const DadosPessoaisSection = ({ form }: Props) => (
       name="enderecoCompleto"
       render={({ field }) => (
         <FormItem>
-          <FormLabel>Endereço Completo: *</FormLabel>
+          <FormLabel className="font-bold">Endereço Completo: *</FormLabel>
           <FormControl>
             <Input placeholder="Rua, número, bairro..." {...field} />
           </FormControl>

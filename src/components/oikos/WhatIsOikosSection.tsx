@@ -6,34 +6,6 @@ import btnMySubscript from '@/assets/oikos/BOTAO_FACA_INSC.png'
 
 const WhatIsOikosSection = () => {
   return (
-    // <section className="relative w-full overflow-hidden bg-secondary text-[#fffbeb] p-8 md:p-16 lg:p-24" style={{ backgroundColor: "#4ade80" }}>
-    //   <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
-    //     <img
-    //       src={ovalImages}
-    //       alt=""
-    //       className="w-full h-full object-cover object-center opacity-90"
-    //       // loading="lazy"
-    //     />
-    //   </div>
-    //   <div className="relative z-10 max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
-    //     <div>
-    //       <h2 className="font-display text-6xl md:text-7xl lg:text-8xl mb-6 uppercase leading-[0.9] tracking-normal">
-    //         O que é<br />o Oikos?
-    //       </h2>
-    //       <p className="text-xl md:text-2xl font-bold max-w-md leading-snug">
-    //         O OIKOS é a nossa experiência de primeiro anúncio para jovens.
-    //       </p>
-    //     </div>
-    //     <div>
-    //       <p className="text-lg md:text-xl lg:text-2xl leading-relaxed font-medium">
-    //         Ele nasce diante da necessidade de alargar as tendas de nosso
-    //         movimento, trazer novos corações e um ar novo para dentro de nossa
-    //         casa, incendiar um novo povo e novos filhos para manifestarem a
-    //         glória de Deus ao mundo.
-    //       </p>
-    //     </div>
-    //   </div>
-    // </section>
     <section className="w-full">
       <picture>
         <source media="(max-width: 767px)" srcSet={whatIsOikosMobile} />

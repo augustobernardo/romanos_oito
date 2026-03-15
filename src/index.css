@@ -110,7 +110,7 @@
 
     --border: 240 5% 33%;
     --input: 240 5% 33%;
-    --ring: 255 91% 76%;
+    --ring: hsl(195 100% 45%) ;
 
     --gradient-primary: linear-gradient(135deg, hsl(345 50% 55%), hsl(345 45% 45%));
     --gradient-accent: linear-gradient(135deg, hsl(38 85% 60%), hsl(35 90% 55%));
@@ -199,4 +199,50 @@ html {
   background-color: #4ade80;
   background-image: radial-gradient(#16a34a 1.5px, transparent 1.5px);
   background-size: 6px 6px;
+}
+
+/* OIKOS Form Design Tokens — extracted from landing page images */
+:root {
+  --oikos-cyan: 195 100% 45%;        /* #00a8e8 - primary cyan */
+  --oikos-cyan-dark: 200 100% 35%;   /* #0077b6 - darker cyan */
+  --oikos-green: 142 69% 58%;        /* #4ade80 - accent green */
+  --oikos-green-dark: 142 76% 36%;   /* #16a34a - darker green */
+  --oikos-teal: 185 70% 15%;         /* dark teal for text */
+  --oikos-bg: 195 60% 97%;           /* very light cyan bg */
+  --oikos-card: 0 0% 100%;           /* white card */
+  --oikos-input-bg: 195 40% 97%;     /* light cyan input bg */
+  --oikos-input-border: 195 40% 82%; /* soft cyan border */
+  --oikos-label: 200 30% 25%;        /* dark blue-gray labels */
+  --oikos-muted: 195 15% 50%;        /* muted text */
+}
+
+/* Scoped oikos form input styles */
+.oikos-form input,
+.oikos-form textarea {
+  background-color: #faf8ef !important;
+  border-color: hsl(195 40% 82%) !important;
+}
+
+.oikos-form input:focus,
+.oikos-form textarea:focus {
+  border-color: hsl(195 100% 45%) !important;
+  ring-color: hsl(195 100% 45%) !important;
+}
+
+.oikos-form label {
+  color: hsl(200 30% 25%) !important;
+}
+
+.oikos-form [role="radiogroup"] label {
+  color: hsl(200 20% 35%) !important;
+}
+
+.oikos-form [data-state="checked"] {
+  background-color: var(--oikos-cyan-dark) !important;
+  border-color: hsl(195 100% 45%) !important;
+}
+
+input[type="radio"] {
+  background-color: hsl(195 100% 45%) !important;
+  border-color: hsl(195 100% 45%) !important;
 }

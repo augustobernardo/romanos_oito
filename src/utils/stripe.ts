@@ -10,3 +10,6 @@ export const STRIPE_PUBLISHABLE_KEY =
 
 export const STRIPE_PRICING_TABLE_ID =
   (import.meta.env.VITE_STRIPE_PRICING_TABLE_ID as string) || "";
+
+export const STRIPE_PAYMENT_LINK_BASE_URL =
+  (import.meta.env.VITE_STRIPE_PAYMENT_LINK_BASE_URL as string) || "https://buy.stripe.com/";

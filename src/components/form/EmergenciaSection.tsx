@@ -33,7 +33,7 @@ const EmergenciaSection = ({ form }: Props) => (
         name="nomePessoaEmergencia"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Nome: *</FormLabel>
+            <FormLabel className="font-bold">Nome: *</FormLabel>
             <FormControl>
               <Input placeholder="Nome da pessoa" {...field} />
             </FormControl>
@@ -46,7 +46,7 @@ const EmergenciaSection = ({ form }: Props) => (
         name="grauParentescoEmergencia"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Grau de Parentesco: *</FormLabel>
+            <FormLabel className="font-bold">Grau de Parentesco: *</FormLabel>
             <FormControl>
               <Input placeholder="Ex: Mãe, Pai, Tio..." {...field} />
             </FormControl>

@@ -22,7 +22,7 @@ const PaisResponsaveisSection = ({ form }: Props) => (
         name="nomeMae"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Nome da Mãe: *</FormLabel>
+            <FormLabel className="font-bold">Nome da Mãe: *</FormLabel>
             <FormControl>
               <Input placeholder="Nome completo da mãe" {...field} />
             </FormControl>
@@ -43,7 +43,7 @@ const PaisResponsaveisSection = ({ form }: Props) => (
         name="nomePai"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Nome do Pai: *</FormLabel>
+            <FormLabel className="font-bold">Nome do Pai: *</FormLabel>
             <FormControl>
               <Input placeholder="Nome completo do pai" {...field} />
             </FormControl>

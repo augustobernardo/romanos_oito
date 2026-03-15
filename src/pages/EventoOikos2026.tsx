@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { CheckCircle, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
@@ -12,7 +13,6 @@ import { Form } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import supabase from "@/utils/supabase";
 
-import { formSchema, type FormData } from "@/components/form/types";
 import { useLotes, getLoteDisponivel } from "@/components/form/useLotes";
 import LoteCard from "@/components/form/LoteCard";
 import DadosPessoaisSection from "@/components/form/DadosPessoaisSection";
@@ -21,6 +21,7 @@ import VidaIgrejaSection from "@/components/form/VidaIgrejaSection";
 import EmergenciaSection from "@/components/form/EmergenciaSection";
 import CamisaSection from "@/components/form/CamisaSection";
 import ExpectativaSection from "@/components/form/ExpectativaSection";
+import { isValidPhone } from "@/utils/phoneUtils";
 
 const calculateAge = (birthday: string) => {
   const today = new Date();
@@ -32,6 +33,55 @@ const calculateAge = (birthday: string) => {
   }
   return age;
 };
+
+const phoneField = z.string().refine(isValidPhone, { message: "Contato inválido" });
+
+// Schema 
+const formSchema = z.object({
+  // Dados Pessoais
+  nome: z.string().min(3, "Nome deve ter pelo menos 3 caracteres").max(100),
+  dataNascimento: z.string().min(1, "Data de nascimento é obrigatória"),
+  telefone: z.string().refine(
+    (val) => { const d = val.replace(/\D/g, ""); return d.length >= 10 && d.length <= 11; },
+    { message: "Telefone inválido" }
+  ),
+  instagram: z.string().min(3, "Instagram deve ter pelo menos 3 caracteres").max(100),
+  comunidade: z.string().min(2, "Comunidade/Paróquia é obrigatória").max(100),
+  cidadeEstado: z.string().min(8, "Estado e Cidade são obrigatórios").max(100),
+  enderecoCompleto: z.string().min(5, "Endereço completo é obrigatório").max(255),
+  comoConheceu: z.string().min(1, "Selecione uma opção"),
+  comoConheceuOutro: z.string().optional(),
+
+  // Pais / Responsáveis
+  nomeMae: z.string().min(3, "Nome da mãe deve ter pelo menos 3 caracteres").max(100),
+  numeroMae: phoneField,
+  nomePai: z.string().min(3, "Nome do pai deve ter pelo menos 3 caracteres").max(100),
+  numeroPai: phoneField,
+  numeroResponsavelProximo: phoneField.optional(),
+
+  // Vida na Igreja
+  isCatolico: z.string().min(1, "Selecione uma opção"),
+  isCatolicoOutro: z.string().optional(),
+  participaMovimento: z.string().min(2, "Campo obrigatório").max(100),
+  fezRetiro: z.string().min(1, "Selecione uma opção"),
+  fezRetiroOutro: z.string().optional(),
+
+  // Emergência
+  nomePessoaEmergencia: z.string().min(3, "Nome deve ter pelo menos 3 caracteres").max(100),
+  grauParentescoEmergencia: z.string().min(2, "Grau de parentesco é obrigatório").max(50),
+  numeroEmergencia: z.string().refine(isValidPhone, { message: "Número de emergência inválido" }),
+
+  // Camisa
+  tamanhoCamisa: z.string().min(1, "Selecione o tamanho da camisa"),
+  cienteTrocaCamisa: z.boolean().refine((val) => val === true, {
+    message: "Você precisa estar ciente para continuar",
+  }),
+
+  // Expectativa
+  expectativaOikos: z.string().optional(),
+});
+
+type FormData = z.infer<typeof formSchema>;
 
 const EventoOikos2026 = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -121,9 +171,6 @@ const EventoOikos2026 = () => {
       console.error("Insert error:", error);
       return;
     }
-
-    handleCheckout(data);
-
     setIsSubmitted(true);
   };
 
@@ -132,31 +179,15 @@ const EventoOikos2026 = () => {
   if (isSubmitted) {
     return (
       <div className="flex min-h-screen flex-col">
-        <Header />
-        <main className="flex flex-1 items-center justify-center px-4 py-16">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="text-center"
-          >
-            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
-              <CheckCircle className="h-10 w-10 text-primary" />
-            </div>
-            <h1 className="font-display text-3xl font-bold text-foreground">
-              Inscrição Confirmada!
-            </h1>
-            <p className="mt-4 text-muted-foreground">
-              Obrigado por se inscrever! Você receberá uma mensagem pelo
-              Whatsapp informado com mais informações.
-            </p>
-            <div className="mt-8 flex gap-4 justify-center">
-              <Button variant="outline" onClick={() => navigate("/eventos")}>
-                Voltar aos Eventos
-              </Button>
-            </div>
-          </motion.div>
+        <main className="flex flex-1 flex-col items-center justify-center gap-6 px-4 py-16">
+          <p className="text-center text-muted-foreground">
+            Checkout não configurado.
+          </p>
+          <Button variant="outline" onClick={() => navigate("/eventos/oikos-2026")}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Voltar
+          </Button>
         </main>
-        <Footer />
       </div>
     );
   }

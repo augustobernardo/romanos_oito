@@ -3,8 +3,9 @@ import HeadlineSection from "@/components/oikos/HeadlineSection";
 import WhatIsOikosSection from "@/components/oikos/WhatIsOikosSection";
 import FAQSection from "@/components/oikos/FAQSection";
 import WelcomeSection from "@/components/oikos/WelcomeSection";
-import TicketSelector from "@/components/oikos/TicketSelector";
+import OikosFormSection from "@/components/oikos/OikosFormSection";
 import ClosingQuoteSection from "@/components/oikos/ClosingQuoteSection";
+import CheckoutOikos2026 from "./CheckoutOikos2026";
 
 const OikosLanding = () => {
   return (
@@ -15,10 +16,9 @@ const OikosLanding = () => {
       <HeroSection />
       <HeadlineSection />
       <WhatIsOikosSection />
-      {/* <CtaBannerSection /> */}
       <FAQSection />
       <WelcomeSection />
-      <TicketSelector />
+      <OikosFormSection />
       <ClosingQuoteSection />
     </div>
   );
