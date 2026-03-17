@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/AdminLayout";
 import {
@@ -11,7 +11,8 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { Pencil, Search, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Download } from "lucide-react";
+import * as XLSX from "xlsx";
 import type { Tables } from "@/integrations/supabase/types";
 import { Button } from "../ui/button";
 import { toast } from "../ui/sonner";
@@ -23,36 +24,16 @@ import {
   DialogTrigger,
 } from "../ui/dialog";
 import { Label } from "../ui/label";
+import { columnLabels, createUniqueKey, formatNamesStringsInscricao, getUniqueRecentInscricoes } from "@/lib/utils";
 
 type Inscricao = Tables<"inscricoes">;
+type SortKey = "nome" | "created_at";
+type SortDir = "asc" | "desc";
 
-const formatPhone = (phone: string) => {
-  return phone.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
-};
+const formatPhone = (phone: string) =>
+  phone.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
 
 const emptyInscricao = { status: "" };
-
-// Função para criar uma chave única baseada em nome e telefone
-const createUniqueKey = (inscricao: Inscricao) => {
-  return `${inscricao.nome.trim().toLowerCase()}_${inscricao.telefone}`;
-};
-
-// Função para filtrar apenas os registros mais recentes por chave única
-const getUniqueRecentInscricoes = (inscricoes: Inscricao[]) => {
-  const uniqueMap = new Map();
-  
-  inscricoes.forEach(inscricao => {
-    const key = createUniqueKey(inscricao);
-    const existing = uniqueMap.get(key);
-    
-    // Se não existir ou se este registro for mais recente, adiciona/substitui
-    if (!existing || new Date(inscricao.created_at) > new Date(existing.created_at)) {
-      uniqueMap.set(key, inscricao);
-    }
-  });
-  
-  return Array.from(uniqueMap.values());
-};
 
 const AdminInscricoes = () => {
   const [inscricoes, setInscricoes] = useState<Inscricao[]>([]);
@@ -62,19 +43,24 @@ const AdminInscricoes = () => {
   const [editing, setEditing] = useState<Inscricao | null>(null);
   const [form, setForm] = useState(emptyInscricao);
   const [allInscricoes, setAllInscricoes] = useState<Inscricao[]>([]);
+  const [sortKey, setSortKey] = useState<SortKey>("created_at");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
 
   const fetchInscricoes = async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from("inscricoes")
-      .select("*")
-      .order("nome", { ascending: true });
+      const { data } = await supabase
+        .from("inscricoes")
+        .select("*")
+        .order("created_at", { ascending: false });
 
     setAllInscricoes(data ?? []);
     
     // Aplica o filtro de registros únicos (apenas o mais recente por nome+telefone)
     const uniqueInscricoes = getUniqueRecentInscricoes(data ?? []);
-    setInscricoes(uniqueInscricoes);
+
+    const formattedInscricoes = formatNamesStringsInscricao(uniqueInscricoes);
+
+    setInscricoes(formattedInscricoes);
     setLoading(false);
   };
 
@@ -84,17 +70,71 @@ const AdminInscricoes = () => {
 
   const openNew = () => { setEditing(null); setForm(emptyInscricao); setOpen(true); };
 
-  const filtered = inscricoes.filter(
-    (i) =>
-      i.nome.toLowerCase().includes(search.toLowerCase()) ||
-      i.telefone.includes(search) ||
-      i.comunidade.toLowerCase().includes(search.toLowerCase()),
-  );
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir(key === "nome" ? "asc" : "desc");
+    }
+  };
+
+  const SortIcon = ({ col }: { col: SortKey }) => {
+    if (sortKey !== col) return <ArrowUpDown className="ml-1 inline h-3.5 w-3.5 opacity-40" />;
+    return sortDir === "asc"
+      ? <ArrowUp className="ml-1 inline h-3.5 w-3.5" />
+      : <ArrowDown className="ml-1 inline h-3.5 w-3.5" />;
+  };
+
+  const sorted = useMemo(() => {
+    const filtered = inscricoes.filter(
+      (i) =>
+        i.nome.toLowerCase().includes(search.toLowerCase()) ||
+        i.telefone.includes(search) ||
+        i.comunidade.toLowerCase().includes(search.toLowerCase())
+    );
+
+    return [...filtered].sort((a, b) => {
+      if (sortKey === "nome") {
+        const cmp = a.nome.localeCompare(b.nome, "pt-BR");
+        return sortDir === "asc" ? cmp : -cmp;
+      }
+      const cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+  }, [inscricoes, search, sortKey, sortDir]);
 
   const statusColor = (s: string) => {
     if (s === "confirmado") return "default";
     if (s === "processando") return "secondary";
     return "destructive";
+  };
+
+  const exportToExcel = () => {
+    const rows = sorted.map((i) => {
+      const row: Record<string, string> = {};
+      for (const key of Object.keys(columnLabels)) {
+        let val = (i as any)[key] ?? "";
+        if (key === "created_at") {
+          val = new Date(val).toLocaleDateString("pt-BR");
+        }
+
+        if (key === "telefone") {
+          val = formatPhone(val);
+        }
+
+        if (key == "data_nascimento") {
+          val = val ? new Date(val).toLocaleDateString("pt-BR") : "";
+        }
+        row[columnLabels[key]] = val;
+      }
+      return row;
+    });
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Inscrições");
+    XLSX.writeFile(wb, `inscricoes_${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
   // Função para abrir o modal de edição
@@ -128,17 +168,6 @@ const AdminInscricoes = () => {
     setOpen(false);
     fetchInscricoes();
   };
-
-  // const handleDelete = async (id: string) => {
-  //   if (!confirm("Tem certeza que deseja excluir esta inscrição?")) return;
-  //   const { error } = await supabase.from("inscricoes").delete().eq("id", id);
-  //   if (error) {
-  //     toast.error("Erro ao excluir");
-  //   } else {
-  //     toast.success("Inscrição excluída com sucesso");
-  //     fetchInscricoes();
-  //   }
-  // };
 
   const handleDelete = async (id: string) => {
     if (!confirm("Tem certeza que deseja excluir esta inscrição?")) return;
@@ -181,7 +210,7 @@ const AdminInscricoes = () => {
   return (
     <AdminLayout>
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="font-display text-2xl font-bold text-foreground">
+        <h1 className="font-display text-2xl font-normal uppercase text-foreground">
           Inscrições
         </h1>
         {/* Dialog Update Status */}
@@ -212,55 +241,100 @@ const AdminInscricoes = () => {
           </DialogContent>
         </Dialog>
         <div className="relative w-full max-w-xs">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          {/* <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="pl-9"
             placeholder="Buscar por nome, telefone..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-          />
+          /> */}
+          <div className="flex items-center gap-2">
+          <div className="relative w-full max-w-xs">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input className="pl-9" placeholder="Buscar por nome, telefone..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          </div>
+          <Button variant="outline" size="sm" className="gap-1.5 whitespace-nowrap" onClick={exportToExcel}>
+            <Download className="h-4 w-4" /> Exportar
+          </Button>
+          </div>
         </div>
       </div>
 
-      <p className="mb-4 text-sm text-muted-foreground">
-        {filtered.length} inscrição(ões) encontrada(s)
-      </p>
+      <p className="mb-4 text-sm text-muted-foreground">{sorted.length} inscrição(ões) encontrada(s)</p>
 
       {loading ? (
         <p className="text-muted-foreground">Carregando...</p>
       ) : (
-        <div className="rounded-md border overflow-x-auto">
-          <Table>
-            <TableHeader>
+        <div className="rounded-md border overflow-x-auto max-h-[70vh] overflow-y-auto">
+          <Table className="min-w-[900px] table-fixed">
+            <TableHeader className="sticky top-0 z-10 bg-background">
               <TableRow>
-                <TableHead className="text-center">Nome</TableHead>
-                <TableHead className="text-center">Telefone</TableHead>
-                <TableHead className="text-center">Comunidade</TableHead>
-                <TableHead className="text-center">Cidade/Estado</TableHead>
-                <TableHead className="text-center">Camisa</TableHead>
-                <TableHead className="text-center">Idade</TableHead>
-                <TableHead className="text-center">Status</TableHead>
+                <TableHead
+                  className="w-[300px] whitespace-nowrap cursor-pointer select-none hover:text-foreground transition-colors"
+                  onClick={() => toggleSort("nome")}
+                >
+                  Nome <SortIcon col="nome" />
+                </TableHead>
+                <TableHead className="w-[190px] whitespace-nowrap">Telefone</TableHead>
+                <TableHead className="w-[200px] whitespace-nowrap">Instagram</TableHead>
+                <TableHead className="w-[340px] whitespace-nowrap">Comunidade</TableHead>
+                <TableHead className="w-[280px] whitespace-nowrap">Cidade/Estado</TableHead>
+                <TableHead className="w-[80px] text-center whitespace-nowrap">Camisa</TableHead>
+                <TableHead className="w-[70px] text-center whitespace-nowrap">Idade</TableHead>
+                <TableHead className="w-[150px] text-center whitespace-nowrap">Status</TableHead>
+                <TableHead
+                  className="w-[170px] text-center whitespace-nowrap cursor-pointer select-none hover:text-foreground transition-colors"
+                  onClick={() => toggleSort("created_at")}
+                >
+                  Data da Inscrição <SortIcon col="created_at" />
+                </TableHead>
+                <TableHead className="w-[100px] text-center whitespace-nowrap">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((i) => (
+              {sorted.map((i) => (
                 <TableRow key={i.id}>
-                  <TableCell className="font-medium">{i.nome}</TableCell>
-                  <TableCell className="text-center">
+                  <TableCell className="font-medium truncate max-w-[180px]" title={i.nome}>{i.nome}</TableCell>
+                  <TableCell className="">
                     {formatPhone(i.telefone)}
                   </TableCell>
-                  <TableCell className="text-center">{i.comunidade}</TableCell>
-                  <TableCell className="text-center">
-                    {i.cidade_estado}
+                  <TableCell className="">
+                    {
+                      i.instagram.toLowerCase().includes("não tenho") ||
+                      i.instagram.toLowerCase().includes("nao tenho")
+                        ? i.instagram
+                        : i.instagram.startsWith("@")
+                        ? i.instagram
+                        : `@${i.instagram}`
+                    }
                   </TableCell>
+                  <TableCell className="truncate max-w-[140px]" title={i.comunidade}>{i.comunidade}</TableCell>
+                  <TableCell className="truncate max-w-[130px]" title={i.cidade_estado}>{i.cidade_estado}</TableCell>
                   <TableCell className="text-center">
                     {i.tamanho_camisa}
                   </TableCell>
-                  <TableCell className="text-center">
+                  <TableCell className="text-center truncate max-w-[70px]" title={(i as any).idade ?? "—"}>
                     {(i as any).idade ?? "—"}
                   </TableCell>
                   <TableCell className="text-center">
                     <Badge variant={statusColor(i.status)}>{i.status}</Badge>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {/* {new Date(i.created_at).toLocaleDateString("pt-BR", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "2-digit",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })} */}
+                    {new Date(i.created_at).toLocaleDateString("pt-BR", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "2-digit",
+                    })} - {new Date(i.created_at).toLocaleTimeString("pt-BR", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1">

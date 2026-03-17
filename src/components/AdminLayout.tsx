@@ -80,31 +80,38 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
       </aside>
 
       {/* Mobile header */}
-      <div className="flex flex-1 flex-col">
-        <header className="flex items-center justify-between border-b border-border bg-card p-4 md:hidden">
-          <span className="font-display text-lg font-semibold">Admin</span>
-          <div className="flex gap-2">
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="border-b border-border bg-card p-3 md:hidden">
+          <div className="flex items-center justify-between">
+            <span className="font-display text-lg font-semibold">Admin</span>
+            <div className="flex gap-1">
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleTheme}>
+                {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleSignOut}>
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+          <nav className="mt-2 flex gap-1 overflow-x-auto">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 to={item.href}
                 className={cn(
-                  "rounded-md p-2",
-                  location.pathname === item.href ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+                  "flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                  location.pathname === item.href
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted"
                 )}
               >
-                <item.icon className="h-4 w-4" />
+                <item.icon className="h-3.5 w-3.5" />
+                {item.label}
               </Link>
             ))}
-            <Button variant="ghost" size="icon" onClick={toggleTheme}>
-              {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </Button>
-            <Button variant="ghost" size="icon" onClick={handleSignOut}>
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </div>
+          </nav>
         </header>
-        <main className="flex-1 overflow-auto p-4 md:p-6">{children}</main>
+        <main className="min-w-0 flex-1 overflow-auto p-3 md:p-6">{children}</main>
       </div>
     </div>
   );

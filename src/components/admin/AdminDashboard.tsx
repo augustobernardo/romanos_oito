@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarDays, Ticket, Users } from "lucide-react";
 import AdminLayout from "@/components/AdminLayout";
+import { getUniqueRecentInscricoes } from "@/lib/utils";
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({ eventos: 0, lotes: 0, inscricoes: 0 });
@@ -12,12 +13,15 @@ const AdminDashboard = () => {
       const [e, l, i] = await Promise.all([
         supabase.from("eventos").select("id", { count: "exact", head: true }),
         supabase.from("lotes").select("id", { count: "exact", head: true }),
-        supabase.from("inscricoes").select("id", { count: "exact", head: true }),
+        supabase.from("inscricoes").select("*")
       ]);
+
+      const uniqueInscricoes = getUniqueRecentInscricoes(i.data || []);
+      
       setStats({
         eventos: e.count ?? 0,
         lotes: l.count ?? 0,
-        inscricoes: i.count ?? 0,
+        inscricoes: uniqueInscricoes.length,
       });
     };
     fetchStats();

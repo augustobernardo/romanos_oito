@@ -106,7 +106,7 @@ const AdminEventos = () => {
   return (
     <AdminLayout>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="font-display text-2xl font-bold text-foreground">Eventos</h1>
+        <h1 className="font-display text-2xl font-normal uppercase text-foreground">Eventos</h1>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button onClick={openNew}><Plus className="mr-2 h-4 w-4" />Novo Evento</Button>
@@ -143,15 +143,15 @@ const AdminEventos = () => {
       </div>
 
       {loading ? <p className="text-muted-foreground">Carregando...</p> : (
-        <div className="rounded-md border">
-          <Table>
+        <div className="rounded-md border overflow-x-auto">
+          <Table className="min-w-[600px]">
             <TableHeader>
               <TableRow>
-                <TableHead className="text-center">Nome</TableHead>
-                <TableHead className="text-center">Local</TableHead>
-                <TableHead className="text-center">Status</TableHead>
-                <TableHead className="text-center">Datas</TableHead>
-                <TableHead className="w-24 text-center">Ações</TableHead>
+                <TableHead className="text-center whitespace-nowrap">Nome</TableHead>
+                <TableHead className="text-center whitespace-nowrap">Local</TableHead>
+                <TableHead className="text-center whitespace-nowrap">Status</TableHead>
+                <TableHead className="text-center whitespace-nowrap">Datas</TableHead>
+                <TableHead className="w-24 text-center whitespace-nowrap">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

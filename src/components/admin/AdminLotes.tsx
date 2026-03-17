@@ -79,7 +79,7 @@ const AdminLotes = () => {
   return (
     <AdminLayout>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="font-display text-2xl font-bold text-foreground">Lotes</h1>
+        <h1 className="font-display text-2xl font-normal uppercase text-foreground">Lotes</h1>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button onClick={openNew}><Plus className="mr-2 h-4 w-4" />Novo Lote</Button>
@@ -110,16 +110,16 @@ const AdminLotes = () => {
       </div>
 
       {loading ? <p className="text-muted-foreground">Carregando...</p> : (
-        <div className="rounded-md border">
-          <Table>
+        <div className="rounded-md border overflow-x-auto">
+          <Table className="min-w-[500px]">
             <TableHeader>
               <TableRow>
                 {/* <TableHead className="text-center">Evento</TableHead> */}
-                <TableHead className="text-center">Nome</TableHead>
-                <TableHead className="text-center">Preço</TableHead>
-                <TableHead className="text-center">Ordem</TableHead>
-                <TableHead className="text-center">Status</TableHead>
-                <TableHead className="w-24">Ações</TableHead>
+                <TableHead className="text-center whitespace-nowrap">Nome</TableHead>
+                <TableHead className="text-center whitespace-nowrap">Preço</TableHead>
+                <TableHead className="text-center whitespace-nowrap">Ordem</TableHead>
+                <TableHead className="text-center whitespace-nowrap">Status</TableHead>
+                <TableHead className="w-24 whitespace-nowrap">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
