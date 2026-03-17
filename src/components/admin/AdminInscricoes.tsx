@@ -11,7 +11,18 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Pencil, Search, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Download } from "lucide-react";
+import {
+  Pencil,
+  Search,
+  Trash2,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Download,
+  CreditCard,
+  QrCode,
+  Eye,
+} from "lucide-react";
 import * as XLSX from "xlsx";
 import type { Tables } from "@/integrations/supabase/types";
 import { Button } from "../ui/button";
@@ -24,7 +35,12 @@ import {
   DialogTrigger,
 } from "../ui/dialog";
 import { Label } from "../ui/label";
-import { columnLabels, createUniqueKey, formatNamesStringsInscricao, getUniqueRecentInscricoes } from "@/lib/utils";
+import {
+  columnLabels,
+  createUniqueKey,
+  formatNamesStringsInscricao,
+  getUniqueRecentInscricoes,
+} from "@/lib/utils";
 
 type Inscricao = Tables<"inscricoes">;
 type SortKey = "nome" | "created_at";
@@ -34,6 +50,58 @@ const formatPhone = (phone: string) =>
   phone.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
 
 const emptyInscricao = { status: "" };
+
+// Função para extrair o path - VERSÃO SIMPLIFICADA (assume que salvamos apenas o nome)
+const extractFilePathFromUrl = (url: string) => {
+  // Se for uma URL completa, tenta extrair o nome
+  if (url.startsWith("http")) {
+    try {
+      const urlObj = new URL(url);
+      const pathParts = urlObj.pathname.split("/");
+      return pathParts[pathParts.length - 1];
+    } catch {
+      return url; // Se não conseguir parsear, retorna a própria string
+    }
+  }
+  // Se já for apenas o nome do arquivo, retorna direto
+  return url;
+};
+
+// Função para formatar o método de pagamento para exibição
+const formatPaymentMethod = (method: string | null) => {
+  if (!method) return "—";
+
+  const methods: Record<string, { label: string; icon: JSX.Element }> = {
+    credit: {
+      label: "Cartão",
+      icon: (
+        <CreditCard
+          className="h-3.5 w-3.5 mr-1"
+          style={{ color: "hsl(195,100%,45%)" }}
+        />
+      ),
+    },
+    pix: {
+      label: "PIX",
+      icon: (
+        <QrCode
+          className="h-3.5 w-3.5 mr-1"
+          style={{ color: "hsl(195,100%,45%)" }}
+        />
+      ),
+    },
+  };
+
+  const payment = methods[method];
+  if (!payment) return method;
+
+  return (
+    <div className="flex items-center justify-center">
+      {payment.icon}
+      <span>{payment.label}</span>
+    </div>
+  );
+};
 
 const AdminInscricoes = () => {
   const [inscricoes, setInscricoes] = useState<Inscricao[]>([]);
@@ -45,16 +113,24 @@ const AdminInscricoes = () => {
   const [allInscricoes, setAllInscricoes] = useState<Inscricao[]>([]);
   const [sortKey, setSortKey] = useState<SortKey>("created_at");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [loadingComprovantes, setLoadingComprovantes] = useState<
+    Record<string, boolean>
+  >({});
+  const [comprovantePreview, setComprovantePreview] = useState<{
+    url: string;
+    nome: string;
+  } | null>(null);
+  const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
 
   const fetchInscricoes = async () => {
     setLoading(true);
-      const { data } = await supabase
-        .from("inscricoes")
-        .select("*")
-        .order("created_at", { ascending: false });
+    const { data } = await supabase
+      .from("inscricoes")
+      .select("*")
+      .order("created_at", { ascending: false });
 
     setAllInscricoes(data ?? []);
-    
+
     // Aplica o filtro de registros únicos (apenas o mais recente por nome+telefone)
     const uniqueInscricoes = getUniqueRecentInscricoes(data ?? []);
 
@@ -68,22 +144,26 @@ const AdminInscricoes = () => {
     fetchInscricoes();
   }, []);
 
-  const openNew = () => { setEditing(null); setForm(emptyInscricao); setOpen(true); };
-
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
       setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     } else {
       setSortKey(key);
-      setSortDir(key === "nome" ? "asc" : "desc");
+      // Define direção padrão para cada coluna
+      if (key === "nome") setSortDir("asc");
+      else if (key === "metodo_pagamento") setSortDir("asc");
+      else setSortDir("desc"); // created_at padrão descendente
     }
   };
 
   const SortIcon = ({ col }: { col: SortKey }) => {
-    if (sortKey !== col) return <ArrowUpDown className="ml-1 inline h-3.5 w-3.5 opacity-40" />;
-    return sortDir === "asc"
-      ? <ArrowUp className="ml-1 inline h-3.5 w-3.5" />
-      : <ArrowDown className="ml-1 inline h-3.5 w-3.5" />;
+    if (sortKey !== col)
+      return <ArrowUpDown className="ml-1 inline h-3.5 w-3.5 opacity-40" />;
+    return sortDir === "asc" ? (
+      <ArrowUp className="ml-1 inline h-3.5 w-3.5" />
+    ) : (
+      <ArrowDown className="ml-1 inline h-3.5 w-3.5" />
+    );
   };
 
   const sorted = useMemo(() => {
@@ -91,7 +171,7 @@ const AdminInscricoes = () => {
       (i) =>
         i.nome.toLowerCase().includes(search.toLowerCase()) ||
         i.telefone.includes(search) ||
-        i.comunidade.toLowerCase().includes(search.toLowerCase())
+        i.comunidade.toLowerCase().includes(search.toLowerCase()),
     );
 
     return [...filtered].sort((a, b) => {
@@ -99,7 +179,8 @@ const AdminInscricoes = () => {
         const cmp = a.nome.localeCompare(b.nome, "pt-BR");
         return sortDir === "asc" ? cmp : -cmp;
       }
-      const cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      const cmp =
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
       return sortDir === "asc" ? cmp : -cmp;
     });
   }, [inscricoes, search, sortKey, sortDir]);
@@ -134,7 +215,10 @@ const AdminInscricoes = () => {
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Inscrições");
-    XLSX.writeFile(wb, `inscricoes_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    XLSX.writeFile(
+      wb,
+      `inscricoes_${new Date().toISOString().slice(0, 10)}.xlsx`,
+    );
   };
 
   // Função para abrir o modal de edição
@@ -171,34 +255,38 @@ const AdminInscricoes = () => {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Tem certeza que deseja excluir esta inscrição?")) return;
-    
+
     // Antes de excluir, verifica se existem registros duplicados
-    const inscricaoToDelete = allInscricoes.find(i => i.id === id);
-    
+    const inscricaoToDelete = allInscricoes.find((i) => i.id === id);
+
     if (inscricaoToDelete) {
       const key = createUniqueKey(inscricaoToDelete);
-      const duplicates = allInscricoes.filter(i => createUniqueKey(i) === key);
-      
+      const duplicates = allInscricoes.filter(
+        (i) => createUniqueKey(i) === key,
+      );
+
       if (duplicates.length > 1) {
         // Se houver duplicatas, pergunta se quer excluir todas ou apenas esta
         const action = confirm(
           `Foram encontradas ${duplicates.length} inscrições para esta pessoa. ` +
-          `Deseja excluir TODAS as inscrições duplicadas? ` +
-          `(Clique OK para excluir todas, ou Cancelar para excluir apenas esta)`
+            `Deseja excluir TODAS as inscrições duplicadas? ` +
+            `(Clique OK para excluir todas, ou Cancelar para excluir apenas esta)`,
         );
-        
+
         if (action) {
           // Exclui todas as duplicatas
-          const idsToDelete = duplicates.map(d => d.id);
+          const idsToDelete = duplicates.map((d) => d.id);
           const { error } = await supabase
             .from("inscricoes")
             .delete()
             .in("id", idsToDelete);
-            
+
           if (error) {
             toast.error("Erro ao excluir registros duplicados");
           } else {
-            toast.success(`${duplicates.length} inscrições excluídas com sucesso`);
+            toast.success(
+              `${duplicates.length} inscrições excluídas com sucesso`,
+            );
             fetchInscricoes();
           }
           return;
@@ -207,8 +295,109 @@ const AdminInscricoes = () => {
     }
   };
 
+  // Função para visualizar comprovante
+  // Função para visualizar comprovante - VERSÃO COM MAIS LOGS
+  const handleViewComprovante = async (
+    comprovanteUrl: string,
+    inscricaoId: string,
+    nome: string,
+  ) => {
+    try {
+      setLoadingComprovantes((prev) => ({ ...prev, [inscricaoId]: true }));
+
+      const filePath = extractFilePathFromUrl(comprovanteUrl);
+
+      if (!filePath) {
+        toast.error("Caminho do arquivo inválido");
+        return;
+      }
+
+      // Gerar URL assinada válida por 60 minutos
+      const { data, error } = await supabase.storage
+        .from("Comprovantes_OIKOS")
+        .createSignedUrl(filePath, 60 * 60);
+
+      if (error) throw error;
+
+      if (data?.signedUrl) {
+        setComprovantePreview({ url: data.signedUrl, nome });
+        setPreviewDialogOpen(true);
+      } else {
+        toast.error("Erro ao gerar link do comprovante");
+      }
+    } catch (error) {
+      console.error("Erro ao acessar comprovante:", error);
+      toast.error("Erro ao acessar comprovante");
+    } finally {
+      setLoadingComprovantes((prev) => ({ ...prev, [inscricaoId]: false }));
+    }
+  };
+
+  // Função para baixar comprovante
+  const handleDownloadComprovante = async (
+    comprovanteUrl: string,
+    inscricaoId: string,
+    nome: string,
+  ) => {
+    try {
+      setLoadingComprovantes((prev) => ({ ...prev, [inscricaoId]: true }));
+
+      const filePath = extractFilePathFromUrl(comprovanteUrl);
+      if (!filePath) {
+        toast.error("Caminho do arquivo inválido");
+        return;
+      }
+
+      // Gerar URL assinada válida por 60 minutos
+      const { data, error } = await supabase.storage
+        .from("Comprovantes_OIKOS")
+        .createSignedUrl(filePath, 60 * 60); // 60 minutos
+
+      if (error) throw error;
+
+      if (data?.signedUrl) {
+        // Criar um link temporário para download
+        const link = document.createElement("a");
+        link.href = data.signedUrl;
+        link.download = `comprovante_${nome}_${new Date().toISOString().split("T")[0]}.${filePath.split(".").pop()}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        toast.success("Download iniciado");
+      } else {
+        toast.error("Erro ao gerar link do comprovante");
+      }
+    } catch (error) {
+      console.error("Erro ao baixar comprovante:", error);
+      toast.error("Erro ao baixar comprovante");
+    } finally {
+      setLoadingComprovantes((prev) => ({ ...prev, [inscricaoId]: false }));
+    }
+  };
+
   return (
     <AdminLayout>
+      {/* Dialog de preview do comprovante */}
+      <Dialog open={previewDialogOpen} onOpenChange={setPreviewDialogOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="font-normal">
+              Comprovante - {comprovantePreview?.nome}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-4 flex justify-center">
+            {comprovantePreview?.url && (
+              <img
+                src={comprovantePreview.url}
+                alt="Comprovante"
+                className="max-w-full max-h-[70vh] rounded-lg border"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="font-display text-2xl font-normal uppercase text-foreground">
           Inscrições
@@ -241,97 +430,187 @@ const AdminInscricoes = () => {
           </DialogContent>
         </Dialog>
         <div className="relative w-full max-w-xs">
-          {/* <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            className="pl-9"
-            placeholder="Buscar por nome, telefone..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          /> */}
           <div className="flex items-center gap-2">
-          <div className="relative w-full max-w-xs">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input className="pl-9" placeholder="Buscar por nome, telefone..." value={search} onChange={(e) => setSearch(e.target.value)} />
-          </div>
-          <Button variant="outline" size="sm" className="gap-1.5 whitespace-nowrap" onClick={exportToExcel}>
-            <Download className="h-4 w-4" /> Exportar
-          </Button>
+            <div className="relative w-full max-w-xs">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                className="pl-9"
+                placeholder="Buscar por nome, telefone..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 whitespace-nowrap"
+              onClick={exportToExcel}
+            >
+              <Download className="h-4 w-4" /> Exportar
+            </Button>
           </div>
         </div>
       </div>
 
-      <p className="mb-4 text-sm text-muted-foreground">{sorted.length} inscrição(ões) encontrada(s)</p>
+      <p className="mb-4 text-sm text-muted-foreground">
+        {sorted.length} inscrição(ões) encontrada(s)
+      </p>
 
       {loading ? (
         <p className="text-muted-foreground">Carregando...</p>
       ) : (
         <div className="rounded-md border overflow-x-auto max-h-[70vh] overflow-y-auto">
-          <Table className="min-w-[900px] table-fixed">
+          <Table className="min-w-[1100px] table-fixed">
             <TableHeader className="sticky top-0 z-10 bg-background">
               <TableRow>
                 <TableHead
-                  className="w-[300px] whitespace-nowrap cursor-pointer select-none hover:text-foreground transition-colors"
+                  className="w-[250px] whitespace-nowrap cursor-pointer select-none hover:text-foreground transition-colors"
                   onClick={() => toggleSort("nome")}
                 >
                   Nome <SortIcon col="nome" />
                 </TableHead>
-                <TableHead className="w-[190px] whitespace-nowrap">Telefone</TableHead>
-                <TableHead className="w-[200px] whitespace-nowrap">Instagram</TableHead>
-                <TableHead className="w-[340px] whitespace-nowrap">Comunidade</TableHead>
-                <TableHead className="w-[280px] whitespace-nowrap">Cidade/Estado</TableHead>
-                <TableHead className="w-[80px] text-center whitespace-nowrap">Camisa</TableHead>
-                <TableHead className="w-[70px] text-center whitespace-nowrap">Idade</TableHead>
-                <TableHead className="w-[150px] text-center whitespace-nowrap">Status</TableHead>
+                <TableHead className="w-[150px] whitespace-nowrap">
+                  Telefone
+                </TableHead>
+                <TableHead className="w-[150px] whitespace-nowrap">
+                  Instagram
+                </TableHead>
+                <TableHead className="w-[200px] whitespace-nowrap">
+                  Comunidade
+                </TableHead>
+                <TableHead className="w-[180px] whitespace-nowrap">
+                  Cidade/Estado
+                </TableHead>
+                <TableHead className="w-[80px] text-center whitespace-nowrap">
+                  Camisa
+                </TableHead>
+                <TableHead className="w-[80px] text-center whitespace-nowrap">
+                  Idade
+                </TableHead>
                 <TableHead
-                  className="w-[170px] text-center whitespace-nowrap cursor-pointer select-none hover:text-foreground transition-colors"
+                  className="w-[130px] text-center whitespace-nowrap cursor-pointer select-none hover:text-foreground transition-colors"
+                  onClick={() => toggleSort("metodo_pagamento")}
+                >
+                  Método <SortIcon col="metodo_pagamento" />
+                </TableHead>
+                <TableHead className="w-[130px] text-center whitespace-nowrap">
+                  Status
+                </TableHead>
+                <TableHead className="w-[200px] text-center whitespace-nowrap">
+                  Comprovante
+                </TableHead>
+                <TableHead
+                  className="w-[130px] text-center whitespace-nowrap cursor-pointer select-none hover:text-foreground transition-colors"
                   onClick={() => toggleSort("created_at")}
                 >
-                  Data da Inscrição <SortIcon col="created_at" />
+                  Data <SortIcon col="created_at" />
                 </TableHead>
-                <TableHead className="w-[100px] text-center whitespace-nowrap">Ações</TableHead>
+                <TableHead className="w-[100px] text-center whitespace-nowrap">
+                  Ações
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {sorted.map((i) => (
                 <TableRow key={i.id}>
-                  <TableCell className="font-medium truncate max-w-[180px]" title={i.nome}>{i.nome}</TableCell>
-                  <TableCell className="">
+                  <TableCell
+                    className="font-medium truncate max-w-[180px]"
+                    title={i.nome}
+                  >
+                    {i.nome}
+                  </TableCell>
+                  <TableCell
+                    className="truncate max-w-[120px]"
+                    title={formatPhone(i.telefone)}
+                  >
                     {formatPhone(i.telefone)}
                   </TableCell>
-                  <TableCell className="">
-                    {
-                      i.instagram.toLowerCase().includes("não tenho") ||
-                      i.instagram.toLowerCase().includes("nao tenho")
+                  <TableCell
+                    className="truncate max-w-[120px]"
+                    title={i.instagram}
+                  >
+                    {i.instagram.toLowerCase().includes("não tenho") ||
+                    i.instagram.toLowerCase().includes("nao tenho")
+                      ? i.instagram
+                      : i.instagram.startsWith("@")
                         ? i.instagram
-                        : i.instagram.startsWith("@")
-                        ? i.instagram
-                        : `@${i.instagram}`
-                    }
+                        : `@${i.instagram}`}
                   </TableCell>
-                  <TableCell className="truncate max-w-[140px]" title={i.comunidade}>{i.comunidade}</TableCell>
-                  <TableCell className="truncate max-w-[130px]" title={i.cidade_estado}>{i.cidade_estado}</TableCell>
+                  <TableCell
+                    className="truncate max-w-[140px]"
+                    title={i.comunidade}
+                  >
+                    {i.comunidade}
+                  </TableCell>
+                  <TableCell
+                    className="truncate max-w-[130px]"
+                    title={i.cidade_estado}
+                  >
+                    {i.cidade_estado}
+                  </TableCell>
                   <TableCell className="text-center">
                     {i.tamanho_camisa}
                   </TableCell>
-                  <TableCell className="text-center truncate max-w-[70px]" title={(i as any).idade ?? "—"}>
+                  <TableCell
+                    className="text-center truncate max-w-[70px]"
+                    title={(i as any).idade ?? "—"}
+                  >
                     {(i as any).idade ?? "—"}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <div className="flex items-center justify-center">
+                      {formatPaymentMethod((i as any).metodo_pagamento)}
+                    </div>
                   </TableCell>
                   <TableCell className="text-center">
                     <Badge variant={statusColor(i.status)}>{i.status}</Badge>
                   </TableCell>
                   <TableCell className="text-center">
-                    {/* {new Date(i.created_at).toLocaleDateString("pt-BR", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "2-digit",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })} */}
+                    {(i as any).comprovante_url ? (
+                      <div className="flex gap-1 justify-center">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() =>
+                            handleViewComprovante(
+                              (i as any).comprovante_url,
+                              i.id,
+                              i.nome,
+                            )
+                          }
+                          disabled={loadingComprovantes[i.id]}
+                          title="Visualizar comprovante"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() =>
+                            handleDownloadComprovante(
+                              (i as any).comprovante_url,
+                              i.id,
+                              i.nome,
+                            )
+                          }
+                          disabled={loadingComprovantes[i.id]}
+                          title="Baixar comprovante"
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center text-xs">
                     {new Date(i.created_at).toLocaleDateString("pt-BR", {
                       day: "2-digit",
                       month: "2-digit",
                       year: "2-digit",
-                    })} - {new Date(i.created_at).toLocaleTimeString("pt-BR", {
+                    })}{" "}
+                    -{" "}
+                    {new Date(i.created_at).toLocaleTimeString("pt-BR", {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}

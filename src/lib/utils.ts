@@ -57,6 +57,7 @@ export const columnLabels: Record<string, string> = {
   expectativa_oikos: "Expectativa OIKOS",
   status: "Status",
   created_at: "Data da Inscrição",
+  metodo_pagamento: "Método de Pagamento"
 };
 
 export const formatNamesString = (str: string) =>

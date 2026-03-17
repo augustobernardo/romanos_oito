@@ -163,38 +163,57 @@ const OikosFormSection = () => {
   };
 
   // Função para fazer upload do comprovante
-  const uploadComprovante = async (file: File, id: number) => {
+  // Função para fazer upload do comprovante - VERSÃO CORRIGIDA
+const uploadComprovante = async (file: File, id: number) => {
+  try {
+    setUploading(true);
+    
     // Criar um nome único para o arquivo
-    const fileExt = file.name.split(".").pop();
+    const fileExt = file.name.split('.').pop();
     const fileName = `comprovante_${id}_${Date.now()}.${fileExt}`;
-    const filePath = `${fileName}`;
+    const filePath = fileName; // Apenas o nome do arquivo
+
+    console.log("Fazendo upload para:", filePath);
 
     // Fazer upload para o Supabase Storage no bucket Comprovantes_OIKOS
     const { error: uploadError } = await supabase.storage
-      .from("Comprovantes_OIKOS")
+      .from('Comprovantes_OIKOS')
       .upload(filePath, file);
 
     if (uploadError) {
+      console.error("Erro no upload:", uploadError);
       throw uploadError;
     }
 
-    // Obter a URL pública do arquivo
-    const { data: urlData } = supabase.storage
-      .from("Comprovantes_OIKOS")
-      .getPublicUrl(filePath);
-
-    // Atualizar a inscrição com a URL do comprovante
+    // IMPORTANTE: Salvar apenas o nome do arquivo, não a URL completa
+    // Atualizar a inscrição com o nome do arquivo
     const { error: updateError } = await supabase
       .from("inscricoes")
-      .update({
-        comprovante_url: urlData.publicUrl,
+      .update({ 
+        comprovante_url: filePath, // Salvar apenas o nome do arquivo
       })
       .eq("id", id);
 
     if (updateError) {
       throw updateError;
     }
-  };
+
+    console.log("Upload concluído, arquivo salvo como:", filePath);
+
+    // Vai para a tela de confirmação
+    setCurrentStep("confirmation");
+
+  } catch (error) {
+    console.error("Erro ao fazer upload:", error);
+    toast({
+      title: "Erro ao enviar comprovante",
+      description: "Tente novamente ou entre em contato conosco.",
+      variant: "destructive",
+    });
+  } finally {
+    setUploading(false);
+  }
+};
 
   const handleFormSubmit = async (data: FormData) => {
     // Apenas avança para a tela de pagamento, sem salvar no banco ainda
