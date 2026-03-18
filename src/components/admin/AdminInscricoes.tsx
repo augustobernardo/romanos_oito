@@ -30,6 +30,7 @@ import { toast } from "../ui/sonner";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -121,6 +122,13 @@ const AdminInscricoes = () => {
     nome: string;
   } | null>(null);
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [duplicatesInfo, setDuplicatesInfo] = useState<{
+    count: number;
+    ids: string[];
+  } | null>(null);
 
   const fetchInscricoes = async () => {
     setLoading(true);
@@ -253,11 +261,61 @@ const AdminInscricoes = () => {
     fetchInscricoes();
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Tem certeza que deseja excluir esta inscrição?")) return;
+  // const handleDelete = async (id: string) => {
+  //   if (!confirm("Tem certeza que deseja excluir esta inscrição?")) return;
+
+  //   // Antes de excluir, verifica se existem registros duplicados
+  //   const inscricaoToDelete = allInscricoes.find((i) => i.id === id);
+
+  //   if (inscricaoToDelete) {
+  //     const key = createUniqueKey(inscricaoToDelete);
+  //     const duplicates = allInscricoes.filter(
+  //       (i) => createUniqueKey(i) === key,
+  //     );
+
+  //     if (duplicates.length > 1) {
+  //       // Se houver duplicatas, pergunta se quer excluir todas ou apenas esta
+  //       const action = confirm(
+  //         `Foram encontradas ${duplicates.length} inscrições para esta pessoa. ` +
+  //           `Deseja excluir TODAS as inscrições duplicadas? ` +
+  //           `(Clique OK para excluir todas, ou Cancelar para excluir apenas esta)`,
+  //       );
+
+  //       if (action) {
+  //         // Exclui todas as duplicatas
+  //         const idsToDelete = duplicates.map((d) => d.id);
+  //         const { error } = await supabase
+  //           .from("inscricoes")
+  //           .delete()
+  //           .in("id", idsToDelete);
+
+  //         if (error) {
+  //           toast.error("Erro ao excluir registros duplicados");
+  //         } else {
+  //           toast.success(
+  //             `${duplicates.length} inscrições excluídas com sucesso`,
+  //           );
+  //           fetchInscricoes();
+  //         }
+  //         return;
+  //       }
+  //     }
+  //   }
+  // };
+
+  const handleDeleteClick = (id: string) => {
+    setSelectedId(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedId) return;
+
+    // Fecha o modal imediatamente
+    setDeleteDialogOpen(false);
 
     // Antes de excluir, verifica se existem registros duplicados
-    const inscricaoToDelete = allInscricoes.find((i) => i.id === id);
+    const inscricaoToDelete = allInscricoes.find((i) => i.id === selectedId);
 
     if (inscricaoToDelete) {
       const key = createUniqueKey(inscricaoToDelete);
@@ -266,32 +324,69 @@ const AdminInscricoes = () => {
       );
 
       if (duplicates.length > 1) {
-        // Se houver duplicatas, pergunta se quer excluir todas ou apenas esta
-        const action = confirm(
-          `Foram encontradas ${duplicates.length} inscrições para esta pessoa. ` +
-            `Deseja excluir TODAS as inscrições duplicadas? ` +
-            `(Clique OK para excluir todas, ou Cancelar para excluir apenas esta)`,
-        );
-
-        if (action) {
-          // Exclui todas as duplicatas
-          const idsToDelete = duplicates.map((d) => d.id);
-          const { error } = await supabase
-            .from("inscricoes")
-            .delete()
-            .in("id", idsToDelete);
-
-          if (error) {
-            toast.error("Erro ao excluir registros duplicados");
-          } else {
-            toast.success(
-              `${duplicates.length} inscrições excluídas com sucesso`,
-            );
-            fetchInscricoes();
-          }
-          return;
-        }
+        // Se houver duplicatas, abre o modal de duplicatas
+        setDuplicatesInfo({
+          count: duplicates.length,
+          ids: duplicates.map((d) => d.id),
+        });
+        setDuplicateDialogOpen(true);
+        return;
       }
+    }
+
+    // Se não houver duplicatas, executa a exclusão
+    await executeDelete([selectedId]);
+  };
+
+  const handleDeleteSingle = async () => {
+    // Fecha o modal de duplicatas imediatamente
+    setDuplicateDialogOpen(false);
+
+    if (selectedId) {
+      await executeDelete([selectedId]);
+    }
+  };
+
+  const handleDeleteAllDuplicates = async () => {
+    // Fecha o modal de duplicatas imediatamente
+    setDuplicateDialogOpen(false);
+
+    if (duplicatesInfo) {
+      await executeDelete(duplicatesInfo.ids);
+    }
+  };
+
+  const executeDelete = async (ids: string[]) => {
+    try {
+      const { error } = await supabase
+        .from("inscricoes")
+        .delete()
+        .in("id", ids);
+
+      if (error) {
+        console.error("Erro ao excluir:", error);
+        toast.error(
+          "Erro ao excluir " + (ids.length > 1 ? "registros" : "inscrição"),
+        );
+        return;
+      }
+
+      // Limpa os estados
+      setSelectedId(null);
+      setDuplicatesInfo(null);
+
+      // Atualiza a lista
+      await fetchInscricoes();
+
+      // Mostra mensagem de sucesso
+      toast.success(
+        ids.length > 1
+          ? `${ids.length} inscrições excluídas com sucesso`
+          : "Inscrição excluída com sucesso",
+      );
+    } catch (error) {
+      console.error("Erro inesperado:", error);
+      toast.error("Erro inesperado ao excluir");
     }
   };
 
@@ -395,6 +490,87 @@ const AdminInscricoes = () => {
               />
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de confirmação de exclusão */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-normal text-xl">
+              Confirmar exclusão
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-muted-foreground">
+              Tem certeza que deseja excluir esta inscrição?
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Esta ação não pode ser desfeita.
+            </p>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmDelete}>
+              Excluir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog para múltiplas inscrições */}
+      <Dialog open={duplicateDialogOpen} onOpenChange={setDuplicateDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-normal text-xl">
+              Múltiplas inscrições encontradas
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-muted-foreground">
+              Foram encontradas{" "}
+              <span className="font-semibold text-foreground">
+                {duplicatesInfo?.count}
+              </span>{" "}
+              inscrições para esta pessoa.
+            </p>
+            <p className="text-muted-foreground mt-2">
+              O que você deseja fazer?
+            </p>
+          </div>
+          <DialogFooter className="flex-col gap-2 sm:flex-row">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDuplicateDialogOpen(false);
+                setSelectedId(null);
+                setDuplicatesInfo(null);
+              }}
+              className="sm:flex-1"
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleDeleteSingle}
+              className="sm:flex-1"
+            >
+              Excluir apenas esta
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteAllDuplicates}
+              className="sm:flex-1"
+            >
+              Excluir todas ({duplicatesInfo?.count})
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -627,7 +803,7 @@ const AdminInscricoes = () => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleDelete(i.id)}
+                        onClick={() => handleDeleteClick(i.id)}
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
