@@ -118,7 +118,11 @@ const OikosFormSection = () => {
   };
 
   // Função para salvar a inscrição no banco
-  const salvarInscricao = async (data: FormData, method: PaymentMethod, statusDinamyc: string = "processando") => {
+  const salvarInscricao = async (
+    data: FormData,
+    method: PaymentMethod,
+    statusDinamyc: string = "processando",
+  ) => {
     const { data: insertedData, error } = await supabase
       .from("inscricoes")
       .insert({
@@ -164,56 +168,55 @@ const OikosFormSection = () => {
 
   // Função para fazer upload do comprovante
   // Função para fazer upload do comprovante - VERSÃO CORRIGIDA
-const uploadComprovante = async (file: File, id: number) => {
-  try {
-    setUploading(true);
-    
-    // Criar um nome único para o arquivo
-    const fileExt = file.name.split('.').pop();
-    const fileName = `comprovante_${id}_${Date.now()}.${fileExt}`;
-    const filePath = fileName; // Apenas o nome do arquivo
+  const uploadComprovante = async (file: File, id: number) => {
+    try {
+      setUploading(true);
 
-    console.log("Fazendo upload para:", filePath);
+      // Criar um nome único para o arquivo
+      const fileExt = file.name.split(".").pop();
+      const fileName = `comprovante_${id}_${Date.now()}.${fileExt}`;
+      const filePath = fileName; // Apenas o nome do arquivo
 
-    // Fazer upload para o Supabase Storage no bucket Comprovantes_OIKOS
-    const { error: uploadError } = await supabase.storage
-      .from('Comprovantes_OIKOS')
-      .upload(filePath, file);
+      console.log("Fazendo upload para:", filePath);
 
-    if (uploadError) {
-      console.error("Erro no upload:", uploadError);
-      throw uploadError;
+      // Fazer upload para o Supabase Storage no bucket Comprovantes_OIKOS
+      const { error: uploadError } = await supabase.storage
+        .from("Comprovantes_OIKOS")
+        .upload(filePath, file);
+
+      if (uploadError) {
+        console.error("Erro no upload:", uploadError);
+        throw uploadError;
+      }
+
+      // IMPORTANTE: Salvar apenas o nome do arquivo, não a URL completa
+      // Atualizar a inscrição com o nome do arquivo
+      const { error: updateError } = await supabase
+        .from("inscricoes")
+        .update({
+          comprovante_url: filePath, // Salvar apenas o nome do arquivo
+        })
+        .eq("id", id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      console.log("Upload concluído, arquivo salvo como:", filePath);
+
+      // Vai para a tela de confirmação
+      setCurrentStep("confirmation");
+    } catch (error) {
+      console.error("Erro ao fazer upload:", error);
+      toast({
+        title: "Erro ao enviar comprovante",
+        description: "Tente novamente ou entre em contato conosco.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
     }
-
-    // IMPORTANTE: Salvar apenas o nome do arquivo, não a URL completa
-    // Atualizar a inscrição com o nome do arquivo
-    const { error: updateError } = await supabase
-      .from("inscricoes")
-      .update({ 
-        comprovante_url: filePath, // Salvar apenas o nome do arquivo
-      })
-      .eq("id", id);
-
-    if (updateError) {
-      throw updateError;
-    }
-
-    console.log("Upload concluído, arquivo salvo como:", filePath);
-
-    // Vai para a tela de confirmação
-    setCurrentStep("confirmation");
-
-  } catch (error) {
-    console.error("Erro ao fazer upload:", error);
-    toast({
-      title: "Erro ao enviar comprovante",
-      description: "Tente novamente ou entre em contato conosco.",
-      variant: "destructive",
-    });
-  } finally {
-    setUploading(false);
-  }
-};
+  };
 
   const handleFormSubmit = async (data: FormData) => {
     // Apenas avança para a tela de pagamento, sem salvar no banco ainda
@@ -691,7 +694,89 @@ const uploadComprovante = async (file: File, id: number) => {
     );
   }
 
-  // Formulário de inscrição
+//   // Formulário de inscrição
+//   return (
+//     <section
+//       id="inscricao"
+//       className="w-full"
+//       style={{ backgroundColor: "#fff9e1" }}
+//     >
+//       <div className="mx-auto max-w-[1200px] px-4 md:px-6 py-16 md:py-20 lg:py-24">
+//         {/* Lote Selection */}
+//         <h2
+//           className="font-display text-2xl md:text-3xl font-bold uppercase text-center mb-2"
+//           style={{ color: "#393939" }}
+//         >
+//           SELECIONE O LOTE
+//         </h2>
+//         <p className="text-center text-sm mb-10" style={{ color: "#393939" }}>
+//           Escolha a melhor opção para você
+//         </p>
+
+//         <div className="grid grid-cols-3 gap-3 md:gap-6 max-w-3xl mx-auto mb-12">
+//           {lotes.map((lote) => (
+//             <LoteCard
+//               key={lote.id}
+//               lote={lote}
+//               isActive={loteSelecionado === lote.id}
+//               isEnabled={lote.id === loteDisponivelId}
+//               onSelect={() => setLoteSelecionado(lote.id)}
+//             />
+//           ))}
+//         </div>
+
+//         {!loteDisponivelId && (
+//           <p
+//             className="text-center text-sm font-medium mb-8"
+//             style={{ color: "#e53e3e" }}
+//           >
+//             Todos os lotes estão esgotados. As inscrições foram encerradas.
+//           </p>
+//         )}
+
+//         {/* Form */}
+//         {loteSelecionado && (
+//           <motion.div
+//             initial={{ opacity: 0, y: 20 }}
+//             animate={{ opacity: 1, y: 0 }}
+//             transition={{ duration: 0.4 }}
+//             className="oikos-form mx-auto max-w-3xl rounded-lg p-1"
+//           >
+//             <h3
+//               className="mb-8 text-center font-display text-xl md:text-3xl uppercase"
+//               style={{ color: "#393939" }}
+//             >
+//               Formulário de Inscrição
+//             </h3>
+
+//             <Form {...form}>
+//               <form
+//                 className="space-y-6"
+//                 onSubmit={form.handleSubmit(handleFormSubmit)}
+//               >
+//                 <DadosPessoaisSection form={form} />
+//                 <PaisResponsaveisSection form={form} />
+//                 <VidaIgrejaSection form={form} />
+//                 <EmergenciaSection form={form} />
+//                 <CamisaSection form={form} />
+//                 <ExpectativaSection form={form} />
+
+//                 <Button
+//                   size="lg"
+//                   className="w-full font-semibold text-white"
+//                   style={{ backgroundColor: "hsl(195 100% 45%)" }}
+//                 >
+//                   Ir para pagamento
+//                 </Button>
+//               </form>
+//             </Form>
+//           </motion.div>
+//         )}
+//       </div>
+//     </section>
+//   );
+// };
+ // Formulário de inscrição
   return (
     <section
       id="inscricao"
@@ -710,29 +795,59 @@ const uploadComprovante = async (file: File, id: number) => {
           Escolha a melhor opção para você
         </p>
 
-        <div className="grid grid-cols-3 gap-3 md:gap-6 max-w-3xl mx-auto mb-12">
-          {lotes.map((lote) => (
-            <LoteCard
-              key={lote.id}
-              lote={lote}
-              isActive={loteSelecionado === lote.id}
-              isEnabled={lote.id === loteDisponivelId}
-              onSelect={() => setLoteSelecionado(lote.id)}
-            />
-          ))}
-        </div>
+        {/* Skeleton loading para os cards de lote */}
+        {lotesLoading ? (
+          <div className="grid grid-cols-3 gap-3 md:gap-6 max-w-3xl mx-auto mb-12">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="rounded-xl border-2 p-5 h-32 bg-gray-200 animate-pulse"
+                style={{
+                  borderColor: "hsl(195 40% 82%)",
+                  backgroundColor: "#e0e0e0",
+                }}
+              />
+            ))}
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-3 gap-3 md:gap-6 max-w-3xl mx-auto mb-12">
+              {lotes.map((lote) => (
+                <LoteCard
+                  key={lote.id}
+                  lote={lote}
+                  isActive={loteSelecionado === lote.id}
+                  isEnabled={lote.id === loteDisponivelId}
+                  onSelect={() => setLoteSelecionado(lote.id)}
+                  isLoading={lotesLoading}
+                />
+              ))}
+            </div>
 
-        {!loteDisponivelId && (
-          <p
-            className="text-center text-sm font-medium mb-8"
-            style={{ color: "#e53e3e" }}
-          >
-            Todos os lotes estão esgotados. As inscrições foram encerradas.
-          </p>
+            {/* Mensagem de esgotado - só aparece quando o carregamento terminou E realmente não há lotes disponíveis */}
+            {!lotesLoading && !loteDisponivelId && lotes.length > 0 && (
+              <p
+                className="text-center text-sm font-medium mb-8"
+                style={{ color: "#e53e3e" }}
+              >
+                Todos os lotes estão esgotados. As inscrições foram encerradas.
+              </p>
+            )}
+
+            {/* Caso não haja lotes no banco */}
+            {!lotesLoading && lotes.length === 0 && (
+              <p
+                className="text-center text-sm font-medium mb-8"
+                style={{ color: "#e53e3e" }}
+              >
+                Nenhum lote disponível no momento.
+              </p>
+            )}
+          </>
         )}
 
         {/* Form */}
-        {loteSelecionado && (
+        {!lotesLoading && loteSelecionado && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -773,5 +888,4 @@ const uploadComprovante = async (file: File, id: number) => {
     </section>
   );
 };
-
 export default OikosFormSection;
