@@ -187,7 +187,7 @@ const OikosFormSection = () => {
         console.error("Erro no upload:", uploadError);
         throw uploadError;
       }
-
+      
       // IMPORTANTE: Salvar apenas o nome do arquivo, não a URL completa
       // Atualizar a inscrição com o nome do arquivo
       const { error: updateError } = await supabase
@@ -693,89 +693,7 @@ const OikosFormSection = () => {
     );
   }
 
-  //   // Formulário de inscrição
-  //   return (
-  //     <section
-  //       id="inscricao"
-  //       className="w-full"
-  //       style={{ backgroundColor: "#fff9e1" }}
-  //     >
-  //       <div className="mx-auto max-w-[1200px] px-4 md:px-6 py-16 md:py-20 lg:py-24">
-  //         {/* Lote Selection */}
-  //         <h2
-  //           className="font-display text-2xl md:text-3xl font-bold uppercase text-center mb-2"
-  //           style={{ color: "#393939" }}
-  //         >
-  //           SELECIONE O LOTE
-  //         </h2>
-  //         <p className="text-center text-sm mb-10" style={{ color: "#393939" }}>
-  //           Escolha a melhor opção para você
-  //         </p>
-
-  //         <div className="grid grid-cols-3 gap-3 md:gap-6 max-w-3xl mx-auto mb-12">
-  //           {lotes.map((lote) => (
-  //             <LoteCard
-  //               key={lote.id}
-  //               lote={lote}
-  //               isActive={loteSelecionado === lote.id}
-  //               isEnabled={lote.id === loteDisponivelId}
-  //               onSelect={() => setLoteSelecionado(lote.id)}
-  //             />
-  //           ))}
-  //         </div>
-
-  //         {!loteDisponivelId && (
-  //           <p
-  //             className="text-center text-sm font-medium mb-8"
-  //             style={{ color: "#e53e3e" }}
-  //           >
-  //             Todos os lotes estão esgotados. As inscrições foram encerradas.
-  //           </p>
-  //         )}
-
-  //         {/* Form */}
-  //         {loteSelecionado && (
-  //           <motion.div
-  //             initial={{ opacity: 0, y: 20 }}
-  //             animate={{ opacity: 1, y: 0 }}
-  //             transition={{ duration: 0.4 }}
-  //             className="oikos-form mx-auto max-w-3xl rounded-lg p-1"
-  //           >
-  //             <h3
-  //               className="mb-8 text-center font-display text-xl md:text-3xl uppercase"
-  //               style={{ color: "#393939" }}
-  //             >
-  //               Formulário de Inscrição
-  //             </h3>
-
-  //             <Form {...form}>
-  //               <form
-  //                 className="space-y-6"
-  //                 onSubmit={form.handleSubmit(handleFormSubmit)}
-  //               >
-  //                 <DadosPessoaisSection form={form} />
-  //                 <PaisResponsaveisSection form={form} />
-  //                 <VidaIgrejaSection form={form} />
-  //                 <EmergenciaSection form={form} />
-  //                 <CamisaSection form={form} />
-  //                 <ExpectativaSection form={form} />
-
-  //                 <Button
-  //                   size="lg"
-  //                   className="w-full font-semibold text-white"
-  //                   style={{ backgroundColor: "hsl(195 100% 45%)" }}
-  //                 >
-  //                   Ir para pagamento
-  //                 </Button>
-  //               </form>
-  //             </Form>
-  //           </motion.div>
-  //         )}
-  //       </div>
-  //     </section>
-  //   );
-  // };
-  // Formulário de inscrição
+  // Formulário de Inscrição
   return (
     <section
       id="inscricao"
