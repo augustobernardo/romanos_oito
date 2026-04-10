@@ -524,7 +524,7 @@ const OikosFormSection = () => {
           </div>
 
           {/* Cards de seleção de pagamento */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6 max-w-3xl mx-auto mb-12">
             {/* Card de Crédito */}
             <motion.div
               whileHover={{ scale: 1.02 }}
