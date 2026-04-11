@@ -57,13 +57,23 @@ interface Cupom {
   comprovante_url: string | null;
 }
 
-const generateCouponCode = (): string => {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let raw = "";
-  for (let i = 0; i < 8; i++) {
-    raw += chars[Math.floor(Math.random() * chars.length)];
+const getNextCouponCode = async (): Promise<string> => {
+  const prefix = "VCMAISDOIS#";
+  const { data } = await supabase
+    .from("cupons")
+    .select("codigo")
+    .like("codigo", `${prefix}%`)
+    .order("codigo", { ascending: false })
+    .limit(1);
+
+  let nextNum = 1;
+  if (data && data.length > 0) {
+    const lastCode = data[0].codigo;
+    const numPart = parseInt(lastCode.replace(prefix, ""), 10);
+    if (!isNaN(numPart)) nextNum = numPart + 1;
   }
-  return btoa(raw);
+
+  return `${prefix}${String(nextNum).padStart(4, "0")}`;
 };
 
 const AdminCupons = () => {
@@ -106,7 +116,7 @@ const AdminCupons = () => {
 
   const handleCreate = async () => {
     setCreating(true);
-    const codigo = generateCouponCode();
+    const codigo = await getNextCouponCode();
     const { error } = await supabase.from("cupons").insert({ codigo });
     if (error) {
       toast.error("Erro ao criar cupom");
