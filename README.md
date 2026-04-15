@@ -1,45 +1,272 @@
-# Welcome to Romanos OITO Website
+# Romanos Oito 🕊️
 
-If you want to work locally using your own IDE, you can clone this repo and push changes.
+> Site oficial do movimento católico **Romanos Oito** — uma plataforma web moderna para conectar, engajar e servir a comunidade do movimento.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+<p align="center">
+  <img alt="React" src="https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=white" />
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white" />
+  <img alt="Vite" src="https://img.shields.io/badge/Vite-5.x-646CFF?style=for-the-badge&logo=vite&logoColor=white" />
+  <img alt="Tailwind CSS" src="https://img.shields.io/badge/TailwindCSS-3.x-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" />
+  <img alt="Supabase" src="https://img.shields.io/badge/Supabase-2.x-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" />
+  <img alt="Stripe" src="https://img.shields.io/badge/Stripe-Payments-635BFF?style=for-the-badge&logo=stripe&logoColor=white" />
+  <img alt="Docker" src="https://img.shields.io/badge/Docker-ready-2496ED?style=for-the-badge&logo=docker&logoColor=white" />
+  <img alt="License" src="https://img.shields.io/badge/license-private-red?style=for-the-badge" />
+</p>
 
-Follow these steps:
+<p align="center">
+  <a href="https://romanosoito.com" target="_blank">
+    🌐 Acessar o site em produção →
+  </a>
+</p>
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+---
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## 📋 Índice
 
-# Step 3: Install the necessary dependencies.
-npm i
+- [Sobre o Projeto](#-sobre-o-projeto)
+- [Funcionalidades](#-funcionalidades)
+- [Stack Tecnológica](#-stack-tecnológica)
+- [Pré-requisitos](#-pré-requisitos)
+- [Como rodar localmente](#-como-rodar-localmente)
+- [Variáveis de Ambiente](#-variáveis-de-ambiente)
+- [Scripts disponíveis](#-scripts-disponíveis)
+- [Estrutura do Projeto](#-estrutura-do-projeto)
+- [Rodando com Docker](#-rodando-com-docker)
+- [Testes](#-testes)
+- [Deploy](#-deploy)
+- [Contribuindo](#-contribuindo)
+- [Licença](#-licença)
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+---
+
+## 📖 Sobre o Projeto
+
+O **Romanos Oito** é um movimento católico com presença digital construída sobre uma stack moderna, performática e escalável. A plataforma oferece uma experiência fluida ao usuário, integrando autenticação, pagamentos e conteúdo dinâmico gerenciado via Supabase.
+
+O nome do projeto é uma referência ao oitavo capítulo da Carta de Paulo aos Romanos — um dos textos mais profundos do Novo Testamento sobre vida no Espírito.
+
+---
+
+## ✨ Funcionalidades
+
+- 🔐 **Autenticação de usuários** via Supabase Auth
+- 💳 **Processamento de pagamentos** integrado com Stripe
+- 📱 **Design responsivo** — funciona em qualquer dispositivo
+- 🎨 **Componentes acessíveis** com shadcn/ui + Radix UI
+- 🌙 **Suporte a tema claro/escuro** via next-themes
+- 🎞️ **Animações fluidas** com Framer Motion
+- 📅 **Seleção de datas** com react-day-picker
+- 📊 **Visualização de dados** com Recharts
+- 📋 **Formulários validados** com React Hook Form + Zod
+- 📁 **Exportação para Excel** com xlsx
+- 🔔 **Notificações toast** com Sonner
+- ⚡ **Carrossel** com Embla Carousel
+
+---
+
+## 🛠️ Stack Tecnológica
+
+| Camada | Tecnologia | Versão |
+|---|---|---|
+| **Frontend** | React | 18.x |
+| **Linguagem** | TypeScript | 5.x |
+| **Build Tool** | Vite + SWC | 5.x |
+| **Estilização** | Tailwind CSS | 3.x |
+| **Componentes UI** | shadcn/ui + Radix UI | latest |
+| **Animações** | Framer Motion | 12.x |
+| **Roteamento** | React Router DOM | 6.x |
+| **Server State** | TanStack React Query | 5.x |
+| **Formulários** | React Hook Form | 7.x |
+| **Validação** | Zod | 3.x |
+| **Backend / Auth / DB** | Supabase | 2.x |
+| **Pagamentos** | Stripe | 20.x |
+| **Testes** | Vitest + Testing Library | 3.x |
+| **Servidor Web** | Nginx | stable |
+| **Containerização** | Docker | — |
+
+---
+
+## ✅ Pré-requisitos
+
+Antes de começar, certifique-se de ter instalado:
+
+- [Node.js](https://nodejs.org/) `>= 20`
+- [npm](https://www.npmjs.com/) ou [bun](https://bun.sh/)
+- [Git](https://git-scm.com/)
+- [Docker](https://www.docker.com/) *(opcional, somente para ambiente de produção)*
+
+Você também vai precisar de contas ativas em:
+- [Supabase](https://supabase.com) — para banco de dados e autenticação
+- [Stripe](https://stripe.com) — para processamento de pagamentos
+
+---
+
+## 🚀 Como rodar localmente
+
+```bash
+# 1. Clone o repositório
+git clone https://github.com/augustobernardo/romanos_oito.git
+
+# 2. Entre na pasta do projeto
+cd romanos_oito
+
+# 3. Instale as dependências
+npm install
+
+# 4. Configure as variáveis de ambiente
+cp .env.example .env
+# Edite o arquivo .env com suas credenciais (veja a seção abaixo)
+
+# 5. Inicie o servidor de desenvolvimento
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Acesse [http://localhost:8080](http://localhost:8080) no seu navegador.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+> 💡 O servidor de desenvolvimento usa a porta `8080` conforme configurado no `vite.config.ts`.
 
-**Use GitHub Codespaces**
+---
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 🔑 Variáveis de Ambiente
 
-## What technologies are used for this project?
+Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis:
 
-This project is built with:
+```env
+# Supabase
+VITE_SUPABASE_URL=https://xxxxxxxxxxx.supabase.co
+VITE_SUPABASE_ANON_KEY=sua_supabase_anon_key
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+# Stripe
+VITE_STRIPE_PUBLIC_KEY=pk_live_xxxxxxxxxxxxxxxx
+```
+
+> ⚠️ **Atenção:** nunca commite o arquivo `.env` com dados reais. Ele já está incluído no `.gitignore`. Para produção, use variáveis de ambiente configuradas diretamente no servidor ou na plataforma de deploy.
+
+---
+
+## 📜 Scripts disponíveis
+
+| Comando | Descrição |
+|---|---|
+| `npm run dev` | Inicia o servidor de desenvolvimento com hot reload na porta 8080 |
+| `npm run build` | Gera o build de produção otimizado na pasta `/dist` |
+| `npm run build:dev` | Gera o build em modo desenvolvimento (útil para debug) |
+| `npm run preview` | Pré-visualiza o build de produção localmente |
+| `npm run lint` | Executa o ESLint e aponta problemas no código |
+| `npm run test` | Executa todos os testes uma única vez |
+| `npm run test:watch` | Executa os testes em modo watch (ideal durante o desenvolvimento) |
+
+---
+
+## 📁 Estrutura do Projeto
+
+```
+romanos_oito/
+├── public/                  # Arquivos estáticos públicos (favicon, imagens, etc.)
+├── src/
+│   ├── components/          # Componentes reutilizáveis da aplicação
+│   │   └── ui/              # Componentes base gerados pelo shadcn/ui
+│   ├── hooks/               # Custom hooks reutilizáveis
+│   ├── lib/                 # Utilitários, helpers e configurações (ex: supabase client)
+│   ├── pages/               # Páginas da aplicação (cada arquivo = uma rota)
+│   ├── index.css            # Estilos globais e variáveis CSS do Tailwind
+│   └── main.tsx             # Ponto de entrada da aplicação
+├── supabase/                # Configurações, migrações e funções do Supabase
+├── Dockerfile               # Multi-stage build para produção (Node → Nginx)
+├── nginx.conf               # Configuração do servidor Nginx
+├── components.json          # Configuração do shadcn/ui (tema slate, CSS variables)
+├── tailwind.config.ts       # Configuração e customização do Tailwind CSS
+├── vite.config.ts           # Configuração do Vite (alias @/, porta 8080)
+├── vitest.config.ts         # Configuração dos testes com Vitest
+├── tsconfig.json            # Configuração principal do TypeScript
+└── package.json             # Dependências e scripts do projeto
+```
+
+---
+
+## 🐳 Rodando com Docker
+
+O projeto possui um `Dockerfile` com **multi-stage build** — a aplicação é compilada com Node.js 20 e servida com Nginx em produção, resultando em uma imagem final leve e otimizada.
+
+```bash
+# Build da imagem Docker
+docker build -t romanos-oito .
+
+# Rodar o container na porta 80
+docker run -p 80:80 romanos-oito
+```
+
+Acesse [http://localhost](http://localhost) no seu navegador.
+
+**Etapas do build:**
+
+| Estágio | Base | Responsabilidade |
+|---|---|---|
+| `build` | `node:20` | Instala dependências e compila a aplicação |
+| `production` | `nginx:stable` | Serve os arquivos estáticos gerados |
+
+---
+
+## 🧪 Testes
+
+O projeto utiliza **Vitest** com **Testing Library** para testes de componentes e unidade.
+
+```bash
+# Rodar todos os testes
+npm run test
+
+# Rodar em modo watch (ideal durante o desenvolvimento)
+npm run test:watch
+```
+
+Os testes ficam localizados próximos aos arquivos que testam, seguindo a convenção `*.test.tsx` ou `*.spec.tsx`.
+
+---
+
+## 🚢 Deploy
+
+O projeto está configurado para deploy via **Docker + Nginx**. O fluxo de produção é:
+
+1. `docker build` compila a aplicação com Node.js 20
+2. Os arquivos estáticos gerados são copiados para o Nginx
+3. O Nginx serve a aplicação na porta `80`
+4. A rota `/` serve o `index.html` — necessário para o roteamento SPA funcionar corretamente
+
+O site está disponível em produção em: **[romanosoito.com](https://romanosoito.com)**
+
+---
+
+## 🤝 Contribuindo
+
+1. Faça um fork do projeto
+2. Crie uma branch para sua feature:
+   ```bash
+   git checkout -b feat/minha-feature
+   ```
+3. Commite suas alterações seguindo o padrão [Conventional Commits](https://www.conventionalcommits.org/pt-br/):
+   ```bash
+   git commit -m 'feat: adiciona minha feature'
+   ```
+4. Faça o push para a branch:
+   ```bash
+   git push origin feat/minha-feature
+   ```
+5. Abra um Pull Request descrevendo o que foi feito e por quê
+
+**Padrão de prefixos para commits:**
+
+| Prefixo | Uso |
+|---|---|
+| `feat:` | Nova funcionalidade |
+| `fix:` | Correção de bug |
+| `docs:` | Alteração em documentação |
+| `style:` | Formatação, sem mudança de lógica |
+| `refactor:` | Refatoração de código |
+| `test:` | Adição ou ajuste de testes |
+| `chore:` | Tarefas de manutenção e configuração |
+
+---
+
+## 📄 Licença
+
+Este projeto é privado e de uso exclusivo do movimento **Romanos Oito**. Todos os direitos reservados.
