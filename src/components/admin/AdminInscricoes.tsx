@@ -51,6 +51,14 @@ type SortDir = "asc" | "desc";
 const formatPhone = (phone: string) =>
   phone.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
 
+// Sanitize values to prevent CSV/Excel formula injection
+const sanitizeForExport = (val: string): string => {
+  if (val.startsWith("=") || val.startsWith("+") || val.startsWith("-") || val.startsWith("@") || val.startsWith("\t") || val.startsWith("\r")) {
+    return "'" + val;
+  }
+  return val;
+};
+
 const emptyInscricao = { status: "" };
 
 // Função para extrair o path - VERSÃO SIMPLIFICADA (assume que salvamos apenas o nome)
@@ -213,7 +221,7 @@ const AdminInscricoes = () => {
     const rows = sorted.map((i) => {
       const row: Record<string, string> = {};
       for (const key of Object.keys(columnLabels)) {
-        let val = (i as any)[key] ?? "";
+        let val = String((i as any)[key] ?? "");
         if (key === "created_at") {
           val = new Date(val).toLocaleDateString("pt-BR");
         }
@@ -225,7 +233,7 @@ const AdminInscricoes = () => {
         if (key == "data_nascimento") {
           val = val ? new Date(val).toLocaleDateString("pt-BR") : "";
         }
-        row[columnLabels[key]] = val;
+        row[columnLabels[key]] = sanitizeForExport(val);
       }
       return row;
     });

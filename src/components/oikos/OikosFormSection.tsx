@@ -33,7 +33,7 @@ import VidaIgrejaSection from "@/components/form/VidaIgrejaSection";
 import EmergenciaSection from "@/components/form/EmergenciaSection";
 import CamisaSection from "@/components/form/CamisaSection";
 import ExpectativaSection from "@/components/form/ExpectativaSection";
-import { STRIPE_PAYMENT_LINK_BASE_URL } from "@/utils/stripe";
+import { STRIPE_PAYMENT_LINK_BASE_URL, PIX_KEY, PIX_RECEIVER_NAME } from "@/utils/stripe";
 
 import qrCodePix from "@/assets/qr_code_pix.png";
 
@@ -52,8 +52,8 @@ type PaymentMethod = "credit" | "pix" | "cupom" | null;
 type PaymentStep = "form" | "cupom_validation" | "payment" | "confirmation";
 
 const PIX_DATA = {
-  key: "177.169.606-01",
-  receiverName: "Ana Clara Gonçalves dos Santos",
+  key: PIX_KEY,
+  receiverName: PIX_RECEIVER_NAME,
 };
 
 const OikosFormSection = () => {
