@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <a href="https://romanosoito.com" target="_blank">
+  <a href="https://romanosoito.com/oikos" target="_blank">
     🌐 Acessar o site em produção →
   </a>
 </p>
