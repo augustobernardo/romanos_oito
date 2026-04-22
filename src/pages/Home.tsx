@@ -3,7 +3,7 @@ import HeroSection from "@/components/home/HeroSection";
 import AboutSection from "@/components/home/AboutSection";
 import Footer from "@/components/home/Footer";
 
-const Index = () => {
+const Home = () => {
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
@@ -17,4 +17,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default Home;

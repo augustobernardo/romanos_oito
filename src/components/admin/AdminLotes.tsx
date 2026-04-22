@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { LotesService } from "@/services/lotes.service";
 import AdminLayout from "@/components/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,36 +22,54 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Trash2 } from "lucide-react";
+import { ConfirmDialog } from "./ConfirmDialog";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Lote = Tables<"lotes">;
-type Evento = Tables<"eventos">;
 
-const emptyLote = { nome: "", preco: "", ordem: 1, status: "disponivel" }; //evento_id: ""
+const emptyLote = { nome: "", preco: "", ordem: 1, status: "disponivel" };
 
 const AdminLotes = () => {
-  const [lotes, setLotes] = useState<Lote[]>([]);
-  const [eventos, setEventos] = useState<Evento[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Lote | null>(null);
   const [form, setForm] = useState(emptyLote);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  const fetchData = async () => {
-    setLoading(true);
-    const [l, e] = await Promise.all([
-      supabase.from("lotes").select("*").order("ordem"),
-      supabase.from("eventos").select("*"),
-    ]);
-    setLotes(l.data ?? []);
-    setEventos(e.data ?? []);
-    setLoading(false);
-  };
+  const { data: lotes = [], isLoading } = useQuery({
+    queryKey: ["lotes"],
+    queryFn: async () => {
+      const { data, error } = await LotesService.findAll();
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const refetch = () => queryClient.invalidateQueries({ queryKey: ["lotes"] });
+
+  const loteMutation = useMutation({
+    mutationFn: async ({ action, payload }: { action: string; payload: unknown }) => {
+      if (action === "insert") return await LotesService.insert(payload as Tables<"lotes">);
+      if (action === "update") {
+        const { id, ...data } = payload as Tables<"lotes"> & { id: number };
+        return await LotesService.update(id, data);
+      }
+      return await LotesService.deleteById(payload as number);
+    },
+    onSuccess: (_, { action }) => {
+      if (action === "insert") toast.success("Lote criado");
+      else if (action === "update") toast.success("Lote atualizado");
+      else toast.success("Excluído");
+      refetch();
+    },
+    onError: (_, { action }) => {
+      if (action === "insert") toast.error("Erro ao criar");
+      else if (action === "update") toast.error("Erro ao atualizar");
+      else toast.error("Erro ao excluir");
+    },
+  });
 
   const openNew = () => {
     setEditing(null);
@@ -64,7 +83,7 @@ const AdminLotes = () => {
       preco: l.preco,
       ordem: l.ordem,
       status: l.status ?? "",
-    }); //evento_id: l.evento_id
+    });
     setOpen(true);
   };
 
@@ -78,36 +97,20 @@ const AdminLotes = () => {
       preco: form.preco,
       ordem: form.ordem,
       status: form.status,
-      // evento_id: form.evento_id || null,
     };
-    if (editing) {
-      const { error } = await supabase
-        .from("lotes")
-        .update(payload)
-        .eq("id", editing.id);
-      if (error) toast.error("Erro ao atualizar");
-      else toast.success("Lote atualizado");
-    } else {
-      const { error } = await supabase.from("lotes").insert(payload);
-      if (error) toast.error("Erro ao criar");
-      else toast.success("Lote criado");
-    }
+    loteMutation.mutate({
+      action: editing ? "update" : "insert",
+      payload: editing ? { ...payload, id: editing.id } : payload,
+    });
     setOpen(false);
-    fetchData();
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("Tem certeza?")) return;
-    const { error } = await supabase.from("lotes").delete().eq("id", id);
-    if (error) toast.error("Erro ao excluir");
-    else {
-      toast.success("Excluído");
-      fetchData();
-    }
+  const handleDeleteClick = (id: number) => { setDeleteId(id); setDeleteDialogOpen(true); };
+  const handleConfirmDelete = () => {
+    if (!deleteId) return;
+    setDeleteDialogOpen(false);
+    loteMutation.mutate({ action: "delete", payload: deleteId });
   };
-
-  const getEventoNome = (id: string | null) =>
-    eventos.find((e) => e.id === id)?.nome ?? "—";
 
   return (
     <AdminLayout>
@@ -127,12 +130,6 @@ const AdminLotes = () => {
               <DialogTitle>{editing ? "Editar Lote" : "Novo Lote"}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              {/* <div><Label>Evento</Label>
-                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={form.evento_id} onChange={(e) => setForm({ ...form, evento_id: e.target.value })}>
-                  <option value="">Selecione...</option>
-                  {eventos.map((e) => <option key={e.id} value={e.id}>{e.nome}</option>)}
-                </select>
-              </div> */}
               <div>
                 <Label>Nome</Label>
                 <Input
@@ -182,14 +179,13 @@ const AdminLotes = () => {
         </Dialog>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <p className="text-muted-foreground">Carregando...</p>
       ) : (
         <div className="rounded-md border overflow-x-auto">
           <Table className="min-w-[500px]">
             <TableHeader>
               <TableRow>
-                {/* <TableHead className="text-center">Evento</TableHead> */}
                 <TableHead className="text-center whitespace-nowrap">
                   Nome
                 </TableHead>
@@ -208,7 +204,6 @@ const AdminLotes = () => {
             <TableBody>
               {lotes.map((l) => (
                 <TableRow key={l.id}>
-                  {/* <TableCell className="text-center">{getEventoNome(l.evento_id)}</TableCell> */}
                   <TableCell className="font-medium text-center">
                     {l.nome}
                   </TableCell>
@@ -235,7 +230,7 @@ const AdminLotes = () => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleDelete(l.id)}
+                        onClick={() => handleDeleteClick(l.id)}
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
@@ -247,6 +242,13 @@ const AdminLotes = () => {
           </Table>
         </div>
       )}
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        description="Tem certeza que deseja excluir este lote?"
+        onConfirm={handleConfirmDelete}
+      />
     </AdminLayout>
   );
 };

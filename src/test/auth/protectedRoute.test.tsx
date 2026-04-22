@@ -23,6 +23,10 @@ const renderWithRouter = (children: React.ReactNode, initialEntries = ["/admin"]
 };
 
 describe("ProtectedRoute", () => {
+  beforeEach(() => {
+    mockUseAuth.mockReset();
+  });
+
   it("mostra loading enquanto verifica autenticação", () => {
     mockUseAuth.mockReturnValue({ user: null, isAdmin: false, loading: true });
     renderWithRouter(<ProtectedRoute><div>Admin</div></ProtectedRoute>);

@@ -47,10 +47,39 @@ O nome do projeto é uma referência ao oitavo capítulo da Carta de Paulo aos R
 
 ---
 
+## 🏗️ Arquitetura
+
+O projeto segue o padrão de **camada de serviço** para separar acesso a dados da camada de apresentação:
+
+| Camada | Responsabilidade | Diretório |
+|--------|-----------------|-----------|
+| **Serviços** | Acesso a dados via Supabase (CRUD, RPCs) | `src/services/` |
+| **Hooks** | Estado React, side effects, orquestração | `src/hooks/` |
+| **Componentes** | UI e interação com o usuário | `src/components/` |
+| **Config** | Constantes, mappers de dados | `src/config/` |
+| **Lib** | Utilitários genéricos (storage, helpers) | `src/lib/` |
+
+**Regra:** Componentes nunca chamam o Supabase diretamente — utilizam os serviços tipados em `src/services/`.
+
+### Fluxo de Inscrição OIKOS
+
+```
+Formulário → Seleção de Lote → Dados Pessoais → Validação de Cupom → Pagamento → Confirmação
+```
+
+1. **Formulário:** Usuário preenche dados pessoais com validação Zod (nome, telefone, idade mínima 16 anos)
+2. **Cupom (opcional):** Códigos especiais como `VCMAISDOIS#XXXX` para inscrição gratuita
+3. **Pagamento:** Cartão de Crédito ou PIX (com upload de comprovante)
+4. **Confirmação:** Tela dinâmica conforme método de pagamento escolhido
+
+---
+
 ## ✨ Funcionalidades
 
-- 🔐 **Autenticação de usuários** via Supabase Auth
-- 💳 **Processamento de pagamentos** integrado com Stripe
+- 🔐 **Autenticação de usuários** via Supabase Auth com controle de roles (admin/user)
+- 💳 **Processamento de pagamentos** integrado com Stripe (Cartão de Crédito + PIX)
+- 📝 **Fluxo de inscrição OIKOS** — formulário multi-step com validação de cupom, seleção de lote e pagamento
+- 🎟️ **Cupons de inscrição** — geração e validação de cupons com formato `VCMAISDOIS#XXXX`
 - 📱 **Design responsivo** — funciona em qualquer dispositivo
 - 🎨 **Componentes acessíveis** com shadcn/ui + Radix UI
 - 🌙 **Suporte a tema claro/escuro** via next-themes
@@ -58,9 +87,11 @@ O nome do projeto é uma referência ao oitavo capítulo da Carta de Paulo aos R
 - 📅 **Seleção de datas** com react-day-picker
 - 📊 **Visualização de dados** com Recharts
 - 📋 **Formulários validados** com React Hook Form + Zod
+- 📁 **Upload de comprovantes** via Supabase Storage
 - 📁 **Exportação para Excel** com xlsx
 - 🔔 **Notificações toast** com Sonner
 - ⚡ **Carrossel** com Embla Carousel
+- 🛡️ **Error Boundary** — tratamento gracioso de erros com `react-error-boundary`
 
 ---
 
@@ -79,8 +110,9 @@ O nome do projeto é uma referência ao oitavo capítulo da Carta de Paulo aos R
 | **Formulários** | React Hook Form | 7.x |
 | **Validação** | Zod | 3.x |
 | **Backend / Auth / DB** | Supabase | 2.x |
-| **Pagamentos** | Stripe | 20.x |
-| **Testes** | Vitest + Testing Library | 3.x |
+| **Pagamentos** | Stripe (SDK + React) | 20.x / 5.x |
+| **Tratamento de erros** | react-error-boundary | 6.x |
+| **Testes** | Vitest + Testing Library | 3.x / 16.x |
 | **Servidor Web** | Nginx | stable |
 | **Containerização** | Docker | — |
 
@@ -138,6 +170,9 @@ VITE_SUPABASE_ANON_KEY=sua_supabase_anon_key
 
 # Stripe
 VITE_STRIPE_PUBLIC_KEY=pk_live_xxxxxxxxxxxxxxxx
+
+# OIKOS / Integrações
+VITE_WHATSAPP_NUMBER=5511999999999
 ```
 
 > ⚠️ **Atenção:** nunca commite o arquivo `.env` com dados reais. Ele já está incluído no `.gitignore`. Para produção, use variáveis de ambiente configuradas diretamente no servidor ou na plataforma de deploy.
@@ -165,13 +200,27 @@ romanos_oito/
 ├── public/                  # Arquivos estáticos públicos (favicon, imagens, etc.)
 ├── src/
 │   ├── components/          # Componentes reutilizáveis da aplicação
+│   │   ├── admin/           # Painel administrativo (eventos, lotes, cupons, inscrições)
+│   │   ├── form/            # Formulário de inscrição (schema, tipos, seções)
+│   │   ├── home/            # Seções da landing page principal
+│   │   ├── oikos/           # Fluxo de inscrição OIKOS (form, cupom, pagamento, confirmação)
 │   │   └── ui/              # Componentes base gerados pelo shadcn/ui
-│   ├── hooks/               # Custom hooks reutilizáveis
-│   ├── lib/                 # Utilitários, helpers e configurações (ex: supabase client)
+│   ├── config/              # Constantes e mappers de dados da aplicação
+│   ├── hooks/               # Custom hooks reutilizáveis (auth, lotes, formulários)
+│   ├── integrations/        # Integrações externas (tipos do Supabase)
+│   ├── lib/                 # Utilitários, helpers e configurações (ex: supabase client, storage)
 │   ├── pages/               # Páginas da aplicação (cada arquivo = uma rota)
+│   ├── services/            # Camada de serviço — acesso a dados via Supabase (auth, eventos, lotes, inscricoes, cupons)
+│   ├── test/                # Testes organizados por tipo
+│   │   ├── config/          # Testes de configuração e mappers
+│   │   ├── factories/       # Fábricas de dados para testes
+│   │   ├── hooks/           # Testes de custom hooks
+│   │   ├── integration/     # Testes de integração de componentes
+│   │   └── unit/            # Testes unitários de serviços e utilitários
+│   ├── utils/               # Funções utilitárias (formatação, validação, Stripe config)
 │   ├── index.css            # Estilos globais e variáveis CSS do Tailwind
+│   ├── App.tsx              # Configuração de rotas e Error Boundary
 │   └── main.tsx             # Ponto de entrada da aplicação
-├── supabase/                # Configurações, migrações e funções do Supabase
 ├── Dockerfile               # Multi-stage build para produção (Node → Nginx)
 ├── nginx.conf               # Configuração do servidor Nginx
 ├── components.json          # Configuração do shadcn/ui (tema slate, CSS variables)

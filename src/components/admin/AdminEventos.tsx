@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { EventosService } from "@/services/eventos.service";
 import AdminLayout from "@/components/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,10 +9,11 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Trash2 } from "lucide-react";
+import { ConfirmDialog } from "./ConfirmDialog";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -29,7 +31,7 @@ const emptyEvento = {
 
 const formatDateEvento = (date: string) => {
   const [year, month, day] = date.split('-').map(Number);
-  const dateObj = new Date(year, month - 1, day); // month é 0-indexed no JavaScript
+  const dateObj = new Date(year, month - 1, day);
   return dateObj.toLocaleDateString("pt-BR", {
     day: "2-digit",
     month: "2-digit",
@@ -38,20 +40,45 @@ const formatDateEvento = (date: string) => {
 };
 
 const AdminEventos = () => {
-  const [eventos, setEventos] = useState<Evento[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Evento | null>(null);
   const [form, setForm] = useState(emptyEvento);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  const fetchEventos = async () => {
-    setLoading(true);
-    const { data } = await supabase.from("eventos").select("*").order("created_at", { ascending: false });
-    setEventos(data ?? []);
-    setLoading(false);
-  };
+  const { data: eventos = [], isLoading } = useQuery({
+    queryKey: ["eventos"],
+    queryFn: async () => {
+      const { data, error } = await EventosService.findAll();
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
 
-  useEffect(() => { fetchEventos(); }, []);
+  const refetch = () => queryClient.invalidateQueries({ queryKey: ["eventos"] });
+
+  const eventoMutation = useMutation({
+    mutationFn: async ({ action, payload }: { action: string; payload: unknown }) => {
+      if (action === "insert") return await EventosService.insert(payload as Tables<"eventos">);
+      if (action === "update") {
+        const { id, ...data } = payload as Tables<"eventos"> & { id: string };
+        return await EventosService.update(id, data);
+      }
+      return await EventosService.deleteById(payload as string);
+    },
+    onSuccess: (_, { action }) => {
+      if (action === "insert") toast.success("Evento criado");
+      else if (action === "update") toast.success("Evento atualizado");
+      else toast.success("Excluído");
+      refetch();
+    },
+    onError: (_, { action }) => {
+      if (action === "insert") toast.error("Erro ao criar");
+      else if (action === "update") toast.error("Erro ao atualizar");
+      else toast.error("Erro ao excluir");
+    },
+  });
 
   const openNew = () => { setEditing(null); setForm(emptyEvento); setOpen(true); };
   const openEdit = (e: Evento) => {
@@ -70,37 +97,27 @@ const AdminEventos = () => {
 
   const handleSave = async () => {
     if (!form.nome) { toast.error("Nome é obrigatório"); return; }
-    if (editing) {
-      const { error } = await supabase.from("eventos").update({
-        nome: form.nome,
-        descricao: form.descricao || null,
-        local: form.local || null,
-        data_inicio: form.data_inicio || null,
-        data_fim: form.data_fim || null,
-        status: form.status,
-        tem_lote: form.tem_lote,
-      }).eq("id", editing.id);
-      if (error) toast.error("Erro ao atualizar"); else toast.success("Evento atualizado");
-    } else {
-      const { error } = await supabase.from("eventos").insert({
-        nome: form.nome,
-        descricao: form.descricao || null,
-        local: form.local || null,
-        data_inicio: form.data_inicio || null,
-        data_fim: form.data_fim || null,
-        status: form.status,
-        tem_lote: form.tem_lote,
-      });
-      if (error) toast.error("Erro ao criar"); else toast.success("Evento criado");
-    }
+    const payload = {
+      nome: form.nome,
+      descricao: form.descricao || null,
+      local: form.local || null,
+      data_inicio: form.data_inicio || null,
+      data_fim: form.data_fim || null,
+      status: form.status,
+      tem_lote: form.tem_lote,
+    };
+    eventoMutation.mutate({
+      action: editing ? "update" : "insert",
+      payload: editing ? { ...payload, id: editing.id } : payload,
+    });
     setOpen(false);
-    fetchEventos();
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Tem certeza que deseja excluir?")) return;
-    const { error } = await supabase.from("eventos").delete().eq("id", id);
-    if (error) toast.error("Erro ao excluir"); else { toast.success("Excluído"); fetchEventos(); }
+  const handleDeleteClick = (id: string) => { setDeleteId(id); setDeleteDialogOpen(true); };
+  const handleConfirmDelete = () => {
+    if (!deleteId) return;
+    setDeleteDialogOpen(false);
+    eventoMutation.mutate({ action: "delete", payload: deleteId });
   };
 
   return (
@@ -142,7 +159,7 @@ const AdminEventos = () => {
         </Dialog>
       </div>
 
-      {loading ? <p className="text-muted-foreground">Carregando...</p> : (
+      {isLoading ? <p className="text-muted-foreground">Carregando...</p> : (
         <div className="rounded-md border overflow-x-auto">
           <Table className="min-w-[600px]">
             <TableHeader>
@@ -164,7 +181,7 @@ const AdminEventos = () => {
                   <TableCell>
                     <div className="flex gap-1">
                       <Button variant="ghost" size="icon" onClick={() => openEdit(e)}><Pencil className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(e.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(e.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -173,6 +190,13 @@ const AdminEventos = () => {
           </Table>
         </div>
       )}
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        description="Tem certeza que deseja excluir este evento?"
+        onConfirm={handleConfirmDelete}
+      />
     </AdminLayout>
   );
 };
