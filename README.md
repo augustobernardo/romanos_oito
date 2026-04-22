@@ -14,12 +14,17 @@
 </p>
 
 <p align="center">
+   <a href="https://github.com/SamKirkland/FTP-Deploy-Action">
+   <img alt="Deployed with FTP Deploy Action" src="https://img.shields.io/badge/Deployed With-FTP DEPLOY ACTION-%3CCOLOR%3E?style=for-the-badge&color=2b9348">
+   </a>
+</p>
+
+<p align="center">
   <a href="https://romanosoito.com/oikos" target="_blank">
     🌐 Acessar o site em produção →
   </a>
 </p>
 
----
 
 ## 📋 Índice
 
@@ -325,8 +330,6 @@ feat/minha-feature  →  develop  →  main
 | `refactor:` | Refatoração de código |
 | `test:` | Adição ou ajuste de testes |
 | `chore:` | Tarefas de manutenção e configuração |
-
----
 
 ## 📄 Licença
 

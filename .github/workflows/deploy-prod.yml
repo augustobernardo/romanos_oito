@@ -38,10 +38,12 @@ jobs:
         run: npm run build
 
       - name: 📂 Sync folders and files to the server
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ${{ secrets.FTP_PROTOCOL }}
+          port: ${{ secrets.FTP_PORT }}
           local-dir: ./dist/
           # server-dir: /public_html
