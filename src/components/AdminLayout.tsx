@@ -11,6 +11,7 @@ import {
   Moon,
   Sun,
   Tag,
+  HeartHandshake,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +21,7 @@ const navItems = [
   { href: "/admin/lotes", label: "Lotes", icon: Ticket },
   { href: "/admin/inscricoes", label: "Inscrições", icon: Users },
   { href: "/admin/cupons", label: "Cupons", icon: Tag },
+  { href: "/admin/servos-amigos", label: "Servos amigos", icon: HeartHandshake },
 ];
 
 const AdminLayout = ({ children }: { children: ReactNode }) => {

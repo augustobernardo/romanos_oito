@@ -225,12 +225,41 @@ Os testes ficam localizados próximos aos arquivos que testam, seguindo a conven
 
 ## 🚢 Deploy
 
-O projeto está configurado para deploy via **Docker + Nginx**. O fluxo de produção é:
+O projeto está configurado para deploy via **Docker + Nginx**, com um pipeline de qualidade protegendo a branch `main`.
 
-1. `docker build` compila a aplicação com Node.js 20
-2. Os arquivos estáticos gerados são copiados para o Nginx
-3. O Nginx serve a aplicação na porta `80`
-4. A rota `/` serve o `index.html` — necessário para o roteamento SPA funcionar corretamente
+### Pipeline completo
+
+```
+feat/* ou fix/*
+      ↓
+   develop  ←─── GitHub Actions ───→  ✅ testes + 🔒 segurança
+      ↓ (aprovado)
+     main
+      ↓
+   Docker build (Node 20 → Nginx)
+      ↓
+  romanosoito.com
+```
+
+### GitHub Actions
+
+Ao abrir um Pull Request para `develop`, as seguintes verificações são executadas automaticamente:
+
+| Action | Descrição |
+|---|---|
+| ✅ **Testes** | Executa `vitest` para garantir que nada quebrou |
+| 🔒 **Segurança** | Analisa o código em busca de vulnerabilidades |
+
+O merge para `main` só é permitido após todas as Actions passarem com sucesso.
+
+### Build de produção
+
+O `Dockerfile` utiliza **multi-stage build**:
+
+| Estágio | Base | Responsabilidade |
+|---|---|---|
+| `build` | `node:20` | Instala dependências e compila a aplicação |
+| `production` | `nginx:stable` | Serve os arquivos estáticos gerados |
 
 O site está disponível em produção em: **[romanosoito.com](https://romanosoito.com)**
 
@@ -238,22 +267,54 @@ O site está disponível em produção em: **[romanosoito.com](https://romanosoi
 
 ## 🤝 Contribuindo
 
-1. Faça um fork do projeto
-2. Crie uma branch para sua feature:
+Este projeto segue um fluxo de branches protegido para garantir qualidade e segurança antes de qualquer alteração chegar à produção.
+
+### Fluxo de branches
+
+```
+feat/minha-feature  →  develop  →  main
+                           ↓
+                     GitHub Actions
+                   (testes + segurança)
+```
+
+| Branch | Propósito |
+|---|---|
+| `main` | Produção — código estável e validado |
+| `develop` | Integração — onde as features se encontram antes de ir para produção |
+| `feat/*` | Features individuais em desenvolvimento |
+| `fix/*` | Correções de bugs |
+
+### Passo a passo
+
+1. Crie sua branch a partir de `develop`:
    ```bash
+   git checkout develop
+   git pull origin develop
    git checkout -b feat/minha-feature
    ```
-3. Commite suas alterações seguindo o padrão [Conventional Commits](https://www.conventionalcommits.org/pt-br/):
+
+2. Desenvolva e commite suas alterações seguindo o padrão [Conventional Commits](https://www.conventionalcommits.org/pt-br/):
    ```bash
-   git commit -m 'feat: adiciona minha feature'
+   git commit -m "feat: adiciona minha feature"
    ```
-4. Faça o push para a branch:
+
+3. Faça o push e abra um Pull Request **para a branch `develop`**:
    ```bash
    git push origin feat/minha-feature
    ```
-5. Abra um Pull Request descrevendo o que foi feito e por quê
 
-**Padrão de prefixos para commits:**
+4. As **GitHub Actions** serão executadas automaticamente ao abrir o PR para `develop`:
+   - ✅ Testes automatizados (`vitest`)
+   - 🔒 Verificações de segurança
+
+5. Após aprovação e Actions passando, o merge é feito em `develop`.
+
+6. Quando `develop` estiver estável, abre-se um PR de `develop` → `main` para o deploy em produção.
+
+> ⚠️ **Nunca abra Pull Requests diretamente para `main`.** Todo código deve passar pela `develop` e pelas Actions antes.
+
+### Padrão de prefixos para commits
 
 | Prefixo | Uso |
 |---|---|

@@ -3,7 +3,7 @@
  * Cobre campos obrigatórios, limites, e regras condicionais.
  */
 import { describe, it, expect } from "vitest";
-import { formSchema } from "@/components/form/types";
+import { formSchema } from "@/components/form/schema";
 
 const validData = {
   nome: "João da Silva",

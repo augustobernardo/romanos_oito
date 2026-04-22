@@ -46,7 +46,7 @@ describe("Segurança - Padrões de código", () => {
       SRC_DIR,
       /dangerouslySetInnerHTML/,
       [".tsx"]
-    ).filter(f => !f.includes("/ui/")); // Exclui componentes de biblioteca (shadcn)
+    ).filter(f => !f.includes("/ui/") && !f.includes("\\ui\\")); // Exclui componentes de biblioteca (shadcn)
     expect(files).toEqual([]);
   });
 

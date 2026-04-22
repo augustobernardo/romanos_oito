@@ -14,7 +14,8 @@ interface Props {
   form: UseFormReturn<FormData>;
 }
 
-const maxAge = "2009-06-04";
+// 17 until september 2026
+const MIN_AGE_BIRTHDATE = "2009-09-30";
 
 const DadosPessoaisSection = ({ form }: Props) => (
   <>
@@ -40,13 +41,17 @@ const DadosPessoaisSection = ({ form }: Props) => (
           <FormItem>
             <FormLabel className="font-bold">Data de Nascimento: *</FormLabel>
             <FormControl>
-              <Input type="date" max={maxAge} {...field} />
+              <Input type="date" max={MIN_AGE_BIRTHDATE} {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
         )}
       />
-      <PhoneInputField form={form} name="telefone" label="Telefone ou WhatsApp: *" />
+      <PhoneInputField
+        form={form}
+        name="telefone"
+        label="Telefone ou WhatsApp: *"
+      />
       <FormField
         control={form.control}
         name="instagram"
@@ -70,7 +75,10 @@ const DadosPessoaisSection = ({ form }: Props) => (
           <FormItem>
             <FormLabel className="font-bold">Comunidade/Paróquia: *</FormLabel>
             <FormControl>
-              <Input placeholder="Nome da sua comunidade ou paróquia" {...field} />
+              <Input
+                placeholder="Nome da sua comunidade ou paróquia"
+                {...field}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -83,7 +91,10 @@ const DadosPessoaisSection = ({ form }: Props) => (
           <FormItem>
             <FormLabel className="font-bold">Cidade e Estado: *</FormLabel>
             <FormControl>
-              <Input placeholder="Ex: Governador Valadares, Minas Gerais" {...field} />
+              <Input
+                placeholder="Ex: Governador Valadares, Minas Gerais"
+                {...field}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>

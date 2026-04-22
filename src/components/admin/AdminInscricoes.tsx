@@ -1,5 +1,6 @@
-import { useEffect, useState, useMemo } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useMemo } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { InscricoesService } from "@/services/inscricoes.service";
 import AdminLayout from "@/components/AdminLayout";
 import {
   Table,
@@ -37,15 +38,20 @@ import {
   DialogTrigger,
 } from "../ui/dialog";
 import { Label } from "../ui/label";
+import { ConfirmDialog } from "./ConfirmDialog";
 import {
   columnLabels,
   createUniqueKey,
   formatNamesStringsInscricao,
   getUniqueRecentInscricoes,
 } from "@/lib/utils";
+import {
+  handleDownloadComprovante,
+  handleViewComprovante,
+} from "@/lib/storage";
 
 type Inscricao = Tables<"inscricoes">;
-type SortKey = "nome" | "created_at";
+type SortKey = "nome" | "created_at" | "metodo_pagamento";
 type SortDir = "asc" | "desc";
 
 const formatPhone = (phone: string) =>
@@ -53,29 +59,20 @@ const formatPhone = (phone: string) =>
 
 // Sanitize values to prevent CSV/Excel formula injection
 const sanitizeForExport = (val: string): string => {
-  if (val.startsWith("=") || val.startsWith("+") || val.startsWith("-") || val.startsWith("@") || val.startsWith("\t") || val.startsWith("\r")) {
+  if (
+    val.startsWith("=") ||
+    val.startsWith("+") ||
+    val.startsWith("-") ||
+    val.startsWith("@") ||
+    val.startsWith("\t") ||
+    val.startsWith("\r")
+  ) {
     return "'" + val;
   }
   return val;
 };
 
 const emptyInscricao = { status: "" };
-
-// Função para extrair o path - VERSÃO SIMPLIFICADA (assume que salvamos apenas o nome)
-const extractFilePathFromUrl = (url: string) => {
-  // Se for uma URL completa, tenta extrair o nome
-  if (url.startsWith("http")) {
-    try {
-      const urlObj = new URL(url);
-      const pathParts = urlObj.pathname.split("/");
-      return pathParts[pathParts.length - 1];
-    } catch {
-      return url; // Se não conseguir parsear, retorna a própria string
-    }
-  }
-  // Se já for apenas o nome do arquivo, retorna direto
-  return url;
-};
 
 // Função para formatar o método de pagamento para exibição
 const formatPaymentMethod = (method: string | null) => {
@@ -123,13 +120,11 @@ const formatPaymentMethod = (method: string | null) => {
 };
 
 const AdminInscricoes = () => {
-  const [inscricoes, setInscricoes] = useState<Inscricao[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Inscricao | null>(null);
   const [form, setForm] = useState(emptyInscricao);
-  const [allInscricoes, setAllInscricoes] = useState<Inscricao[]>([]);
   const [sortKey, setSortKey] = useState<SortKey>("created_at");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [loadingComprovantes, setLoadingComprovantes] = useState<
@@ -148,27 +143,51 @@ const AdminInscricoes = () => {
     ids: string[];
   } | null>(null);
 
-  const fetchInscricoes = async () => {
-    setLoading(true);
-    const { data } = await supabase
-      .from("inscricoes")
-      .select("*")
-      .order("created_at", { ascending: false });
+  const refetch = () =>
+    queryClient.invalidateQueries({ queryKey: ["inscricoes"] });
 
-    setAllInscricoes(data ?? []);
+  const inscricaoMutation = useMutation({
+    mutationFn: async ({
+      action,
+      payload,
+    }: {
+      action: string;
+      payload: unknown;
+    }) => {
+      if (action === "updateStatus") {
+        const { id, status } = payload as { id: string; status: string };
+        return await InscricoesService.updateStatus(id, status);
+      }
+      if (action === "delete") {
+        return await InscricoesService.deleteByIds(payload as string[]);
+      }
+    },
+    onSuccess: (_, { action }) => {
+      if (action === "updateStatus")
+        toast.success("Status atualizado com sucesso");
+      refetch();
+    },
+    onError: (_, { action }) => {
+      if (action === "updateStatus") toast.error("Erro ao atualizar status");
+      else if (action === "delete") toast.error("Erro ao excluir inscrição");
+    },
+  });
 
-    // Aplica o filtro de registros únicos (apenas o mais recente por nome+telefone)
-    const uniqueInscricoes = getUniqueRecentInscricoes(data ?? []);
+  const { data: rawInscricoes = [], isLoading } = useQuery({
+    queryKey: ["inscricoes"],
+    queryFn: async () => {
+      const { data, error } = await InscricoesService.findAll();
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
 
-    const formattedInscricoes = formatNamesStringsInscricao(uniqueInscricoes);
-
-    setInscricoes(formattedInscricoes);
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchInscricoes();
-  }, []);
+  // Derived data: all raw records for duplicate detection, and unique formatted for display
+  const allInscricoes = rawInscricoes;
+  const inscricoes = useMemo(
+    () => formatNamesStringsInscricao(getUniqueRecentInscricoes(rawInscricoes)),
+    [rawInscricoes],
+  );
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -205,6 +224,12 @@ const AdminInscricoes = () => {
         const cmp = a.nome.localeCompare(b.nome, "pt-BR");
         return sortDir === "asc" ? cmp : -cmp;
       }
+      if (sortKey === "metodo_pagamento") {
+        const aMethod = a.metodo_pagamento ?? "";
+        const bMethod = b.metodo_pagamento ?? "";
+        const cmp = aMethod.localeCompare(bMethod, "pt-BR");
+        return sortDir === "asc" ? cmp : -cmp;
+      }
       const cmp =
         new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
       return sortDir === "asc" ? cmp : -cmp;
@@ -221,7 +246,7 @@ const AdminInscricoes = () => {
     const rows = sorted.map((i) => {
       const row: Record<string, string> = {};
       for (const key of Object.keys(columnLabels)) {
-        let val = String((i as any)[key] ?? "");
+        let val = String((i[key as keyof Inscricao] as string | null) ?? "");
         if (key === "created_at") {
           val = new Date(val).toLocaleDateString("pt-BR");
         }
@@ -262,21 +287,13 @@ const AdminInscricoes = () => {
     }
 
     if (editing) {
-      // Atualizar registro existente
-      const { error } = await supabase
-        .from("inscricoes")
-        .update({ status: form.status })
-        .eq("id", editing.id);
-
-      if (error) {
-        toast.error("Erro ao atualizar status");
-      } else {
-        toast.success("Status atualizado com sucesso");
-      }
+      inscricaoMutation.mutate({
+        action: "updateStatus",
+        payload: { id: editing.id, status: form.status },
+      });
     }
 
     setOpen(false);
-    fetchInscricoes();
   };
 
   const handleDeleteClick = (id: string) => {
@@ -332,119 +349,37 @@ const AdminInscricoes = () => {
     }
   };
 
-  const executeDelete = async (ids: string[]) => {
-    try {
-      const { error } = await supabase
-        .from("inscricoes")
-        .delete()
-        .in("id", ids);
-
-      if (error) {
-        console.error("Erro ao excluir:", error);
-        toast.error(
-          "Erro ao excluir " + (ids.length > 1 ? "registros" : "inscrição"),
-        );
-        return;
-      }
-
-      // Limpa os estados
-      setSelectedId(null);
-      setDuplicatesInfo(null);
-
-      // Atualiza a lista
-      await fetchInscricoes();
-
-      // Mostra mensagem de sucesso
-      toast.success(
-        ids.length > 1
-          ? `${ids.length} inscrições excluídas com sucesso`
-          : "Inscrição excluída com sucesso",
-      );
-    } catch (error) {
-      console.error("Erro inesperado:", error);
-      toast.error("Erro inesperado ao excluir");
-    }
+  const executeDelete = (ids: string[]) => {
+    setSelectedId(null);
+    setDuplicatesInfo(null);
+    inscricaoMutation.mutate({ action: "delete", payload: ids });
   };
 
-  // Função para visualizar comprovante
-  // Função para visualizar comprovante - VERSÃO COM MAIS LOGS
-  const handleViewComprovante = async (
+  const onViewComprovante = async (
     comprovanteUrl: string,
     inscricaoId: string,
     nome: string,
   ) => {
-    try {
-      setLoadingComprovantes((prev) => ({ ...prev, [inscricaoId]: true }));
-
-      const filePath = extractFilePathFromUrl(comprovanteUrl);
-
-      if (!filePath) {
-        toast.error("Caminho do arquivo inválido");
-        return;
-      }
-
-      // Gerar URL assinada válida por 60 minutos
-      const { data, error } = await supabase.storage
-        .from("Comprovantes_OIKOS")
-        .createSignedUrl(filePath, 60 * 60);
-
-      if (error) throw error;
-
-      if (data?.signedUrl) {
-        setComprovantePreview({ url: data.signedUrl, nome });
+    await handleViewComprovante(
+      comprovanteUrl,
+      nome,
+      (loading) =>
+        setLoadingComprovantes((prev) => ({ ...prev, [inscricaoId]: loading })),
+      (url, nome) => {
+        setComprovantePreview({ url, nome });
         setPreviewDialogOpen(true);
-      } else {
-        toast.error("Erro ao gerar link do comprovante");
-      }
-    } catch (error) {
-      console.error("Erro ao acessar comprovante:", error);
-      toast.error("Erro ao acessar comprovante");
-    } finally {
-      setLoadingComprovantes((prev) => ({ ...prev, [inscricaoId]: false }));
-    }
+      },
+    );
   };
 
-  // Função para baixar comprovante
-  const handleDownloadComprovante = async (
+  const onDownloadComprovante = async (
     comprovanteUrl: string,
     inscricaoId: string,
     nome: string,
   ) => {
-    try {
-      setLoadingComprovantes((prev) => ({ ...prev, [inscricaoId]: true }));
-
-      const filePath = extractFilePathFromUrl(comprovanteUrl);
-      if (!filePath) {
-        toast.error("Caminho do arquivo inválido");
-        return;
-      }
-
-      // Gerar URL assinada válida por 60 minutos
-      const { data, error } = await supabase.storage
-        .from("Comprovantes_OIKOS")
-        .createSignedUrl(filePath, 60 * 60); // 60 minutos
-
-      if (error) throw error;
-
-      if (data?.signedUrl) {
-        // Criar um link temporário para download
-        const link = document.createElement("a");
-        link.href = data.signedUrl;
-        link.download = `comprovante_${nome}_${new Date().toISOString().split("T")[0]}.${filePath.split(".").pop()}`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        toast.success("Download iniciado");
-      } else {
-        toast.error("Erro ao gerar link do comprovante");
-      }
-    } catch (error) {
-      console.error("Erro ao baixar comprovante:", error);
-      toast.error("Erro ao baixar comprovante");
-    } finally {
-      setLoadingComprovantes((prev) => ({ ...prev, [inscricaoId]: false }));
-    }
+    await handleDownloadComprovante(comprovanteUrl, nome, (loading) =>
+      setLoadingComprovantes((prev) => ({ ...prev, [inscricaoId]: loading })),
+    );
   };
 
   return (
@@ -470,35 +405,12 @@ const AdminInscricoes = () => {
       </Dialog>
 
       {/* Dialog de confirmação de exclusão */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="font-normal text-xl">
-              Confirmar exclusão
-            </DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <p className="text-muted-foreground">
-              Tem certeza que deseja excluir esta inscrição?
-            </p>
-            <p className="text-sm text-muted-foreground mt-1">
-              Esta ação não pode ser desfeita.
-            </p>
-          </div>
-
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button
-              variant="outline"
-              onClick={() => setDeleteDialogOpen(false)}
-            >
-              Cancelar
-            </Button>
-            <Button variant="destructive" onClick={handleConfirmDelete}>
-              Excluir
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        description="Tem certeza que deseja excluir esta inscrição?"
+        onConfirm={handleConfirmDelete}
+      />
 
       {/* Dialog para múltiplas inscrições */}
       <Dialog open={duplicateDialogOpen} onOpenChange={setDuplicateDialogOpen}>
@@ -608,7 +520,7 @@ const AdminInscricoes = () => {
         {sorted.length} inscrição(ões) encontrada(s)
       </p>
 
-      {loading ? (
+      {isLoading ? (
         <p className="text-muted-foreground">Carregando...</p>
       ) : (
         <div className="rounded-md border overflow-x-auto max-h-[70vh] overflow-y-auto">
@@ -624,7 +536,7 @@ const AdminInscricoes = () => {
                 <TableHead className="w-[150px] whitespace-nowrap">
                   Telefone
                 </TableHead>
-                <TableHead className="w-[150px] whitespace-nowrap">
+                <TableHead className="w-[185px] whitespace-nowrap">
                   Instagram
                 </TableHead>
                 <TableHead className="w-[200px] whitespace-nowrap">
@@ -705,30 +617,26 @@ const AdminInscricoes = () => {
                   </TableCell>
                   <TableCell
                     className="text-center truncate max-w-[70px]"
-                    title={(i as any).idade ?? "—"}
+                    title={i.idade ?? "—"}
                   >
-                    {(i as any).idade ?? "—"}
+                    {i.idade ?? "—"}
                   </TableCell>
                   <TableCell className="text-center">
                     <div className="flex items-center justify-center">
-                      {formatPaymentMethod((i as any).metodo_pagamento)}
+                      {formatPaymentMethod(i.metodo_pagamento)}
                     </div>
                   </TableCell>
                   <TableCell className="text-center">
                     <Badge variant={statusColor(i.status)}>{i.status}</Badge>
                   </TableCell>
                   <TableCell className="text-center">
-                    {(i as any).comprovante_url ? (
+                    {i.comprovante_url ? (
                       <div className="flex gap-1 justify-center">
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() =>
-                            handleViewComprovante(
-                              (i as any).comprovante_url,
-                              i.id,
-                              i.nome,
-                            )
+                            onViewComprovante(i.comprovante_url!, i.id, i.nome)
                           }
                           disabled={loadingComprovantes[i.id]}
                           title="Visualizar comprovante"
@@ -739,8 +647,8 @@ const AdminInscricoes = () => {
                           variant="ghost"
                           size="icon"
                           onClick={() =>
-                            handleDownloadComprovante(
-                              (i as any).comprovante_url,
+                            onDownloadComprovante(
+                              i.comprovante_url!,
                               i.id,
                               i.nome,
                             )

@@ -6,6 +6,7 @@ import WelcomeSection from "@/components/oikos/WelcomeSection";
 import OikosFormSection from "@/components/oikos/OikosFormSection";
 import ClosingQuoteSection from "@/components/oikos/ClosingQuoteSection";
 import { useEffect, useState } from "react";
+import { WHATSAPP_NUMBER } from "@/config/constants";
 
 const OikosLanding = () => {
   const [showTooltip, setShowTooltip] = useState(false);
@@ -67,7 +68,7 @@ const OikosLanding = () => {
 
         {/* WhatsApp button */}
         <a
-          href="https://api.whatsapp.com/send?phone=5533998427416&text=Ol%C3%A1!%20Preciso%20de%20ajuda%20com%20o%20OIKOS%202026."
+          href={`https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=Ol%C3%A1!%20Preciso%20de%20ajuda%20com%20o%20OIKOS%202026.`}
           target="_blank"
           rel="noopener noreferrer"
           className="flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-transform hover:scale-110"
