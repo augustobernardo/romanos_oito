@@ -2,7 +2,7 @@
   "name": "vite_react_shadcn_ts",
   "homepage": "https://romanosoito.com",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.16",
   "type": "module",
   "scripts": {
     "dev": "vite",
