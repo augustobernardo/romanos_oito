@@ -77,6 +77,10 @@ export const CuponsServoService = {
   async validar(codigo: string) {
     return await client.rpc("validar_cupom_servo", { _codigo: codigo });
   },
+
+  async desativar(codigo: string) {
+    return await client.rpc("desativar_cupom_servo", { _codigo: codigo });
+  },
 };
 
 export const getNextServoCouponCode = async (): Promise<string> => {
