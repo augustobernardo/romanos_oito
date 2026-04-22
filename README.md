@@ -47,39 +47,10 @@ O nome do projeto é uma referência ao oitavo capítulo da Carta de Paulo aos R
 
 ---
 
-## 🏗️ Arquitetura
-
-O projeto segue o padrão de **camada de serviço** para separar acesso a dados da camada de apresentação:
-
-| Camada | Responsabilidade | Diretório |
-|--------|-----------------|-----------|
-| **Serviços** | Acesso a dados via Supabase (CRUD, RPCs) | `src/services/` |
-| **Hooks** | Estado React, side effects, orquestração | `src/hooks/` |
-| **Componentes** | UI e interação com o usuário | `src/components/` |
-| **Config** | Constantes, mappers de dados | `src/config/` |
-| **Lib** | Utilitários genéricos (storage, helpers) | `src/lib/` |
-
-**Regra:** Componentes nunca chamam o Supabase diretamente — utilizam os serviços tipados em `src/services/`.
-
-### Fluxo de Inscrição OIKOS
-
-```
-Formulário → Seleção de Lote → Dados Pessoais → Validação de Cupom → Pagamento → Confirmação
-```
-
-1. **Formulário:** Usuário preenche dados pessoais com validação Zod (nome, telefone, idade mínima 16 anos)
-2. **Cupom (opcional):** Códigos especiais como `VCMAISDOIS#XXXX` para inscrição gratuita
-3. **Pagamento:** Cartão de Crédito ou PIX (com upload de comprovante)
-4. **Confirmação:** Tela dinâmica conforme método de pagamento escolhido
-
----
-
 ## ✨ Funcionalidades
 
-- 🔐 **Autenticação de usuários** via Supabase Auth com controle de roles (admin/user)
-- 💳 **Processamento de pagamentos** integrado com Stripe (Cartão de Crédito + PIX)
-- 📝 **Fluxo de inscrição OIKOS** — formulário multi-step com validação de cupom, seleção de lote e pagamento
-- 🎟️ **Cupons de inscrição** — geração e validação de cupons com formato `VCMAISDOIS#XXXX`
+- 🔐 **Autenticação de usuários** via Supabase Auth
+- 💳 **Processamento de pagamentos** integrado com Stripe
 - 📱 **Design responsivo** — funciona em qualquer dispositivo
 - 🎨 **Componentes acessíveis** com shadcn/ui + Radix UI
 - 🌙 **Suporte a tema claro/escuro** via next-themes
@@ -87,11 +58,9 @@ Formulário → Seleção de Lote → Dados Pessoais → Validação de Cupom �
 - 📅 **Seleção de datas** com react-day-picker
 - 📊 **Visualização de dados** com Recharts
 - 📋 **Formulários validados** com React Hook Form + Zod
-- 📁 **Upload de comprovantes** via Supabase Storage
 - 📁 **Exportação para Excel** com xlsx
 - 🔔 **Notificações toast** com Sonner
 - ⚡ **Carrossel** com Embla Carousel
-- 🛡️ **Error Boundary** — tratamento gracioso de erros com `react-error-boundary`
 
 ---
 
@@ -110,9 +79,8 @@ Formulário → Seleção de Lote → Dados Pessoais → Validação de Cupom �
 | **Formulários** | React Hook Form | 7.x |
 | **Validação** | Zod | 3.x |
 | **Backend / Auth / DB** | Supabase | 2.x |
-| **Pagamentos** | Stripe (SDK + React) | 20.x / 5.x |
-| **Tratamento de erros** | react-error-boundary | 6.x |
-| **Testes** | Vitest + Testing Library | 3.x / 16.x |
+| **Pagamentos** | Stripe | 20.x |
+| **Testes** | Vitest + Testing Library | 3.x |
 | **Servidor Web** | Nginx | stable |
 | **Containerização** | Docker | — |
 
@@ -170,9 +138,6 @@ VITE_SUPABASE_ANON_KEY=sua_supabase_anon_key
 
 # Stripe
 VITE_STRIPE_PUBLIC_KEY=pk_live_xxxxxxxxxxxxxxxx
-
-# OIKOS / Integrações
-VITE_WHATSAPP_NUMBER=5511999999999
 ```
 
 > ⚠️ **Atenção:** nunca commite o arquivo `.env` com dados reais. Ele já está incluído no `.gitignore`. Para produção, use variáveis de ambiente configuradas diretamente no servidor ou na plataforma de deploy.
@@ -200,27 +165,13 @@ romanos_oito/
 ├── public/                  # Arquivos estáticos públicos (favicon, imagens, etc.)
 ├── src/
 │   ├── components/          # Componentes reutilizáveis da aplicação
-│   │   ├── admin/           # Painel administrativo (eventos, lotes, cupons, inscrições)
-│   │   ├── form/            # Formulário de inscrição (schema, tipos, seções)
-│   │   ├── home/            # Seções da landing page principal
-│   │   ├── oikos/           # Fluxo de inscrição OIKOS (form, cupom, pagamento, confirmação)
 │   │   └── ui/              # Componentes base gerados pelo shadcn/ui
-│   ├── config/              # Constantes e mappers de dados da aplicação
-│   ├── hooks/               # Custom hooks reutilizáveis (auth, lotes, formulários)
-│   ├── integrations/        # Integrações externas (tipos do Supabase)
-│   ├── lib/                 # Utilitários, helpers e configurações (ex: supabase client, storage)
+│   ├── hooks/               # Custom hooks reutilizáveis
+│   ├── lib/                 # Utilitários, helpers e configurações (ex: supabase client)
 │   ├── pages/               # Páginas da aplicação (cada arquivo = uma rota)
-│   ├── services/            # Camada de serviço — acesso a dados via Supabase (auth, eventos, lotes, inscricoes, cupons)
-│   ├── test/                # Testes organizados por tipo
-│   │   ├── config/          # Testes de configuração e mappers
-│   │   ├── factories/       # Fábricas de dados para testes
-│   │   ├── hooks/           # Testes de custom hooks
-│   │   ├── integration/     # Testes de integração de componentes
-│   │   └── unit/            # Testes unitários de serviços e utilitários
-│   ├── utils/               # Funções utilitárias (formatação, validação, Stripe config)
 │   ├── index.css            # Estilos globais e variáveis CSS do Tailwind
-│   ├── App.tsx              # Configuração de rotas e Error Boundary
 │   └── main.tsx             # Ponto de entrada da aplicação
+├── supabase/                # Configurações, migrações e funções do Supabase
 ├── Dockerfile               # Multi-stage build para produção (Node → Nginx)
 ├── nginx.conf               # Configuração do servidor Nginx
 ├── components.json          # Configuração do shadcn/ui (tema slate, CSS variables)
@@ -274,12 +225,41 @@ Os testes ficam localizados próximos aos arquivos que testam, seguindo a conven
 
 ## 🚢 Deploy
 
-O projeto está configurado para deploy via **Docker + Nginx**. O fluxo de produção é:
+O projeto está configurado para deploy via **Docker + Nginx**, com um pipeline de qualidade protegendo a branch `main`.
 
-1. `docker build` compila a aplicação com Node.js 20
-2. Os arquivos estáticos gerados são copiados para o Nginx
-3. O Nginx serve a aplicação na porta `80`
-4. A rota `/` serve o `index.html` — necessário para o roteamento SPA funcionar corretamente
+### Pipeline completo
+
+```
+feat/* ou fix/*
+      ↓
+   develop  ←─── GitHub Actions ───→  ✅ testes + 🔒 segurança
+      ↓ (aprovado)
+     main
+      ↓
+   Docker build (Node 20 → Nginx)
+      ↓
+  romanosoito.com
+```
+
+### GitHub Actions
+
+Ao abrir um Pull Request para `develop`, as seguintes verificações são executadas automaticamente:
+
+| Action | Descrição |
+|---|---|
+| ✅ **Testes** | Executa `vitest` para garantir que nada quebrou |
+| 🔒 **Segurança** | Analisa o código em busca de vulnerabilidades |
+
+O merge para `main` só é permitido após todas as Actions passarem com sucesso.
+
+### Build de produção
+
+O `Dockerfile` utiliza **multi-stage build**:
+
+| Estágio | Base | Responsabilidade |
+|---|---|---|
+| `build` | `node:20` | Instala dependências e compila a aplicação |
+| `production` | `nginx:stable` | Serve os arquivos estáticos gerados |
 
 O site está disponível em produção em: **[romanosoito.com](https://romanosoito.com)**
 
@@ -287,22 +267,54 @@ O site está disponível em produção em: **[romanosoito.com](https://romanosoi
 
 ## 🤝 Contribuindo
 
-1. Faça um fork do projeto
-2. Crie uma branch para sua feature:
+Este projeto segue um fluxo de branches protegido para garantir qualidade e segurança antes de qualquer alteração chegar à produção.
+
+### Fluxo de branches
+
+```
+feat/minha-feature  →  develop  →  main
+                           ↓
+                     GitHub Actions
+                   (testes + segurança)
+```
+
+| Branch | Propósito |
+|---|---|
+| `main` | Produção — código estável e validado |
+| `develop` | Integração — onde as features se encontram antes de ir para produção |
+| `feat/*` | Features individuais em desenvolvimento |
+| `fix/*` | Correções de bugs |
+
+### Passo a passo
+
+1. Crie sua branch a partir de `develop`:
    ```bash
+   git checkout develop
+   git pull origin develop
    git checkout -b feat/minha-feature
    ```
-3. Commite suas alterações seguindo o padrão [Conventional Commits](https://www.conventionalcommits.org/pt-br/):
+
+2. Desenvolva e commite suas alterações seguindo o padrão [Conventional Commits](https://www.conventionalcommits.org/pt-br/):
    ```bash
-   git commit -m 'feat: adiciona minha feature'
+   git commit -m "feat: adiciona minha feature"
    ```
-4. Faça o push para a branch:
+
+3. Faça o push e abra um Pull Request **para a branch `develop`**:
    ```bash
    git push origin feat/minha-feature
    ```
-5. Abra um Pull Request descrevendo o que foi feito e por quê
 
-**Padrão de prefixos para commits:**
+4. As **GitHub Actions** serão executadas automaticamente ao abrir o PR para `develop`:
+   - ✅ Testes automatizados (`vitest`)
+   - 🔒 Verificações de segurança
+
+5. Após aprovação e Actions passando, o merge é feito em `develop`.
+
+6. Quando `develop` estiver estável, abre-se um PR de `develop` → `main` para o deploy em produção.
+
+> ⚠️ **Nunca abra Pull Requests diretamente para `main`.** Todo código deve passar pela `develop` e pelas Actions antes.
+
+### Padrão de prefixos para commits
 
 | Prefixo | Uso |
 |---|---|
