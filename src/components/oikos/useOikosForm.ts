@@ -129,6 +129,16 @@ export const useOikosForm = () => {
       );
       if (error) throw error;
 
+      if (cupomServoCodigo) {
+        // Desativa o cupom de servo após uso bem-sucedido (uso único por inscrição).
+        // Falhas aqui não devem bloquear o fluxo do usuário.
+        try {
+          await CuponsServoService.desativar(cupomServoCodigo);
+        } catch (deactivateError) {
+          console.error("Erro ao desativar cupom servo:", deactivateError);
+        }
+      }
+
       goToPaymentLink();
       setCurrentStep("confirmation");
     } catch (error) {
@@ -255,6 +265,16 @@ export const useOikosForm = () => {
         );
         if (updateError) throw updateError;
       }
+
+      if (cupomServoCodigo) {
+        // Desativa o cupom de servo após uso bem-sucedido (uso único por inscrição).
+        try {
+          await CuponsServoService.desativar(cupomServoCodigo);
+        } catch (deactivateError) {
+          console.error("Erro ao desativar cupom servo:", deactivateError);
+        }
+      }
+
       setCurrentStep("confirmation");
     } catch (error) {
       console.error("Erro ao processar pagamento PIX:", error);

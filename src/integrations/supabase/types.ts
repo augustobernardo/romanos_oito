@@ -297,6 +297,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      desativar_cupom_servo: { Args: { _codigo: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
