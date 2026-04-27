@@ -21,7 +21,11 @@ const navItems = [
   { href: "/admin/lotes", label: "Lotes", icon: Ticket },
   { href: "/admin/inscricoes", label: "Inscrições", icon: Users },
   { href: "/admin/cupons", label: "Cupons", icon: Tag },
-  { href: "/admin/servos-amigos", label: "Servos amigos", icon: HeartHandshake },
+  {
+    href: "/admin/servos-amigos",
+    label: "Servos amigos",
+    icon: HeartHandshake,
+  },
 ];
 
 const AdminLayout = ({ children }: { children: ReactNode }) => {
@@ -53,9 +57,9 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen overflow-hidden">
       {/* Sidebar */}
-      <aside className="hidden w-64 flex-col border-r border-border bg-card md:flex">
+      <aside className="hidden h-screen w-64 flex-shrink-0 flex-col border-r border-border bg-card md:flex">
         <div className="border-b border-border p-4">
           <Link
             to="/"
@@ -113,7 +117,7 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
       </aside>
 
       {/* Mobile header */}
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <header className="border-b border-border bg-card p-3 md:hidden">
           <div className="flex items-center justify-between">
             <span className="font-display text-lg font-semibold">Admin</span>
@@ -158,7 +162,7 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
             ))}
           </nav>
         </header>
-        <main className="min-w-0 flex-1 overflow-auto p-3 md:p-6">
+        <main className="min-h-0 min-w-0 flex-1 overflow-auto p-3 md:p-6">
           {children}
         </main>
       </div>
