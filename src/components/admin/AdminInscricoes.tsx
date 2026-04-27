@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { InscricoesService } from "@/services/inscricoes.service";
+import { CuponsServoService } from "@/services/cuponsServo.service";
 import AdminLayout from "@/components/AdminLayout";
 import {
   Table,
@@ -51,6 +52,9 @@ import {
 } from "@/lib/storage";
 
 type Inscricao = Tables<"inscricoes">;
+type InscricaoWithServo = Inscricao & {
+  nome_servo_cupom: string | null;
+};
 type SortKey = "nome" | "created_at" | "metodo_pagamento";
 type SortDir = "asc" | "desc";
 
@@ -176,16 +180,37 @@ const AdminInscricoes = () => {
   const { data: rawInscricoes = [], isLoading } = useQuery({
     queryKey: ["inscricoes"],
     queryFn: async () => {
-      const { data, error } = await InscricoesService.findAll();
-      if (error) throw error;
-      return data ?? [];
+      const [inscricoesResult, cuponsServoResult] = await Promise.all([
+        InscricoesService.findAll(),
+        CuponsServoService.findAll(),
+      ]);
+
+      if (inscricoesResult.error) throw inscricoesResult.error;
+      if (cuponsServoResult.error) throw cuponsServoResult.error;
+
+      const nomesServoPorCupom = new Map(
+        (cuponsServoResult.data ?? []).map((cupom) => [
+          cupom.codigo,
+          cupom.nome_servo,
+        ]),
+      );
+
+      return (inscricoesResult.data ?? []).map((inscricao) => ({
+        ...inscricao,
+        nome_servo_cupom: inscricao.codigo_servo
+          ? (nomesServoPorCupom.get(inscricao.codigo_servo) ?? null)
+          : null,
+      }));
     },
   });
 
   // Derived data: all raw records for duplicate detection, and unique formatted for display
   const allInscricoes = rawInscricoes;
   const inscricoes = useMemo(
-    () => formatNamesStringsInscricao(getUniqueRecentInscricoes(rawInscricoes)),
+    () =>
+      formatNamesStringsInscricao(
+        getUniqueRecentInscricoes(rawInscricoes),
+      ) as InscricaoWithServo[],
     [rawInscricoes],
   );
 
@@ -524,7 +549,7 @@ const AdminInscricoes = () => {
         <p className="text-muted-foreground">Carregando...</p>
       ) : (
         <div className="rounded-md border overflow-x-auto max-h-[70vh] overflow-y-auto">
-          <Table className="min-w-[1100px] table-fixed">
+          <Table className="min-w-[1400px] table-fixed">
             <TableHeader className="sticky top-0 z-10 bg-background">
               <TableRow>
                 <TableHead
@@ -556,6 +581,12 @@ const AdminInscricoes = () => {
                   onClick={() => toggleSort("metodo_pagamento")}
                 >
                   Método <SortIcon col="metodo_pagamento" />
+                </TableHead>
+                <TableHead className="w-[170px] whitespace-nowrap">
+                  Cupom Servo Amigo
+                </TableHead>
+                <TableHead className="w-[190px] whitespace-nowrap">
+                  Nome do Servo
                 </TableHead>
                 <TableHead className="w-[130px] text-center whitespace-nowrap">
                   Status
@@ -625,6 +656,18 @@ const AdminInscricoes = () => {
                     <div className="flex items-center justify-center">
                       {formatPaymentMethod(i.metodo_pagamento)}
                     </div>
+                  </TableCell>
+                  <TableCell
+                    className="truncate max-w-[170px]"
+                    title={i.codigo_servo ?? "—"}
+                  >
+                    {i.codigo_servo ?? "—"}
+                  </TableCell>
+                  <TableCell
+                    className="truncate max-w-[190px]"
+                    title={i.nome_servo_cupom ?? "—"}
+                  >
+                    {i.nome_servo_cupom ?? "—"}
                   </TableCell>
                   <TableCell className="text-center">
                     <Badge variant={statusColor(i.status)}>{i.status}</Badge>
