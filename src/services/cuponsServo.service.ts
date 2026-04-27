@@ -8,6 +8,15 @@ export type CupomServo = {
   created_at: string;
 };
 
+export type CupomServoWithEncontrista = CupomServo & {
+  nome_encontrista: string | null;
+};
+
+type InscricaoCupomServo = {
+  codigo_servo: string | null;
+  nome: string;
+};
+
 const TABLE = "cupons_servo" as const;
 
 // We bypass the generated types here because cupons_servo was added in a
@@ -16,12 +25,21 @@ const TABLE = "cupons_servo" as const;
 const client = supabase as unknown as {
   from: (table: string) => {
     select: (cols: string) => {
-      order: (col: string, opts: { ascending: boolean }) => Promise<{
+      order: (
+        col: string,
+        opts: { ascending: boolean },
+      ) => Promise<{
         data: CupomServo[] | null;
         error: { message: string } | null;
       }>;
-      like: (col: string, pattern: string) => {
-        order: (col: string, opts: { ascending: boolean }) => {
+      like: (
+        col: string,
+        pattern: string,
+      ) => {
+        order: (
+          col: string,
+          opts: { ascending: boolean },
+        ) => {
           limit: (n: number) => Promise<{
             data: Array<{ codigo: string }> | null;
             error: { message: string } | null;
@@ -29,12 +47,20 @@ const client = supabase as unknown as {
         };
       };
     };
-    insert: (data: Partial<CupomServo>) => Promise<{ error: { message: string } | null }>;
+    insert: (
+      data: Partial<CupomServo>,
+    ) => Promise<{ error: { message: string } | null }>;
     update: (data: Partial<CupomServo>) => {
-      eq: (col: string, val: string) => Promise<{ error: { message: string } | null }>;
+      eq: (
+        col: string,
+        val: string,
+      ) => Promise<{ error: { message: string } | null }>;
     };
     delete: () => {
-      eq: (col: string, val: string) => Promise<{ error: { message: string } | null }>;
+      eq: (
+        col: string,
+        val: string,
+      ) => Promise<{ error: { message: string } | null }>;
     };
   };
   rpc: (
@@ -45,19 +71,65 @@ const client = supabase as unknown as {
 
 export const SERVO_PREFIX = "SERVOAMIGO#";
 
+export const attachEncontristasToCuponsServo = (
+  cupons: CupomServo[],
+  inscricoes: InscricaoCupomServo[],
+): CupomServoWithEncontrista[] => {
+  const inscricoesPorCodigo = new Map<string, string>();
+
+  inscricoes.forEach((inscricao) => {
+    if (
+      inscricao.codigo_servo &&
+      !inscricoesPorCodigo.has(inscricao.codigo_servo)
+    ) {
+      inscricoesPorCodigo.set(inscricao.codigo_servo, inscricao.nome);
+    }
+  });
+
+  return cupons.map((cupom) => ({
+    ...cupom,
+    nome_encontrista: inscricoesPorCodigo.get(cupom.codigo) ?? null,
+  }));
+};
+
 export const CuponsServoService = {
   async findAll() {
-    return await client.from(TABLE).select("*").order("created_at", { ascending: false });
+    return await client
+      .from(TABLE)
+      .select("*")
+      .order("created_at", { ascending: false });
+  },
+
+  async findAllWithEncontristas() {
+    const [
+      { data: cupons, error: cuponsError },
+      { data: inscricoes, error: inscricoesError },
+    ] = await Promise.all([
+      client.from(TABLE).select("*").order("created_at", { ascending: false }),
+      supabase
+        .from("inscricoes")
+        .select("codigo_servo, nome")
+        .not("codigo_servo", "is", null)
+        .order("created_at", { ascending: false }),
+    ]);
+
+    if (cuponsError) return { data: null, error: cuponsError };
+    if (inscricoesError) return { data: null, error: inscricoesError };
+
+    return {
+      data: attachEncontristasToCuponsServo(
+        cupons ?? [],
+        (inscricoes ?? []) as InscricaoCupomServo[],
+      ),
+      error: null,
+    };
   },
 
   async insert(data: { codigo: string; nome_servo: string; ativo?: boolean }) {
     return await client.from(TABLE).insert(data);
   },
 
-  async update(
-    id: string,
-    data: { nome_servo?: string; ativo?: boolean },
-  ) {
+  async update(id: string, data: { nome_servo?: string; ativo?: boolean }) {
     return await client.from(TABLE).update(data).eq("id", id);
   },
 

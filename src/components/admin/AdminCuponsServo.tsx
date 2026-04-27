@@ -48,7 +48,8 @@ const AdminCuponsServo = () => {
   const { data: cupons = [], isLoading } = useQuery({
     queryKey: ["cupons_servo"],
     queryFn: async () => {
-      const { data, error } = await CuponsServoService.findAll();
+      const { data, error } =
+        await CuponsServoService.findAllWithEncontristas();
       if (error) throw error;
       return data ?? [];
     },
@@ -191,7 +192,7 @@ const AdminCuponsServo = () => {
       <p className="text-sm text-muted-foreground mb-4">
         Cupons de rastreio no formato <strong>SERVOAMIGO#XXX</strong>. Eles não
         alteram o valor da inscrição — servem para identificar qual servo está
-        convidando mais pessoas.
+        convidando mais pessoas e qual encontrista utilizou cada código.
       </p>
 
       {isLoading ? (
@@ -200,7 +201,7 @@ const AdminCuponsServo = () => {
         <p className="text-muted-foreground">Nenhum cupom cadastrado.</p>
       ) : (
         <div className="rounded-md border overflow-x-auto">
-          <Table className="min-w-[700px]">
+          <Table className="min-w-[820px]">
             <TableHeader>
               <TableRow>
                 <TableHead className="text-center whitespace-nowrap">
@@ -208,6 +209,9 @@ const AdminCuponsServo = () => {
                 </TableHead>
                 <TableHead className="text-center whitespace-nowrap">
                   Nome do servo
+                </TableHead>
+                <TableHead className="text-center whitespace-nowrap">
+                  Encontrista
                 </TableHead>
                 <TableHead className="text-center whitespace-nowrap">
                   Status
@@ -226,6 +230,9 @@ const AdminCuponsServo = () => {
                   </TableCell>
                   <TableCell className="text-center text-sm">
                     {c.nome_servo}
+                  </TableCell>
+                  <TableCell className="text-center text-sm">
+                    {c.nome_encontrista ?? "—"}
                   </TableCell>
                   <TableCell className="text-center">
                     {c.ativo ? (
