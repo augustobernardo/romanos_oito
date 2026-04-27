@@ -12,7 +12,10 @@ import {
   InscricoesService,
   uploadComprovanteFile,
 } from "@/services/inscricoes.service";
-import { STRIPE_PAYMENT_LINK_BASE_URL } from "@/utils/stripe";
+import {
+  STRIPE_PAYMENT_LINK_BASE_URL,
+  STRIPE_SERVO_AMIGO_PAYMENT_LINK,
+} from "@/utils/stripe";
 import { CuponsServoService } from "@/services/cuponsServo.service";
 
 type PaymentMethod = "credit" | "pix" | "cupom" | null;
@@ -85,6 +88,11 @@ export const useOikosForm = () => {
   };
 
   const goToPaymentLink = () => {
+    if (cupomServoCodigo) {
+      window.location.href = STRIPE_SERVO_AMIGO_PAYMENT_LINK;
+      return;
+    }
+
     const selectedLotePaymentId = getLoteDisponivelPaymentLink(
       lotes,
       loteSelecionado!,
@@ -123,7 +131,7 @@ export const useOikosForm = () => {
         loteSelecionado,
         form.getValues(),
         "credit",
-        "processando",
+        "confirmado",
         undefined,
         cupomServoCodigo,
       );
@@ -259,10 +267,8 @@ export const useOikosForm = () => {
       // do mesmo cupom) e NÃO deve ser sobrescrito. Lote normal precisa persistir
       // o nome do próprio arquivo enviado, isolado por inscrição.
       if (!isLoteEspecialSelected()) {
-        const { error: updateError } = await InscricoesService.updateComprovante(
-          inscricaoData.id,
-          fileName,
-        );
+        const { error: updateError } =
+          await InscricoesService.updateComprovante(inscricaoData.id, fileName);
         if (updateError) throw updateError;
       }
 

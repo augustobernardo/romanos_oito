@@ -12,7 +12,11 @@ export const STRIPE_PRICING_TABLE_ID =
   (import.meta.env.VITE_STRIPE_PRICING_TABLE_ID as string) || "";
 
 export const STRIPE_PAYMENT_LINK_BASE_URL =
-  (import.meta.env.VITE_STRIPE_PAYMENT_LINK_BASE_URL as string) || "https://buy.stripe.com/";
+  (import.meta.env.VITE_STRIPE_PAYMENT_LINK_BASE_URL as string) ||
+  "https://buy.stripe.com/";
+
+export const STRIPE_SERVO_AMIGO_PAYMENT_LINK =
+  (import.meta.env.VITE_STRIPE_SERVO_AMIGO_PAYMENT_LINK as string) || "";
 
 /**
  * PIX payment configuration.
