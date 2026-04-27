@@ -171,7 +171,7 @@ const AdminCuponsServo = () => {
         <h1 className="font-display text-2xl font-bold text-foreground">
           Servos amigos
         </h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap justify-end gap-2">
           <Button
             variant="outline"
             size="icon"
@@ -195,89 +195,93 @@ const AdminCuponsServo = () => {
         convidando mais pessoas e qual encontrista utilizou cada código.
       </p>
 
-      {isLoading ? (
-        <p className="text-muted-foreground">Carregando...</p>
-      ) : cupons.length === 0 ? (
-        <p className="text-muted-foreground">Nenhum cupom cadastrado.</p>
-      ) : (
-        <div className="rounded-md border overflow-x-auto">
-          <Table className="min-w-[820px]">
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-center whitespace-nowrap">
-                  Código
-                </TableHead>
-                <TableHead className="text-center whitespace-nowrap">
-                  Nome do servo
-                </TableHead>
-                <TableHead className="text-center whitespace-nowrap">
-                  Encontrista
-                </TableHead>
-                <TableHead className="text-center whitespace-nowrap">
-                  Status
-                </TableHead>
-                <TableHead className="text-center whitespace-nowrap">
-                  Criado em
-                </TableHead>
-                <TableHead className="w-28 whitespace-nowrap">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {cupons.map((c) => (
-                <TableRow key={c.id}>
-                  <TableCell className="font-mono text-center text-sm">
-                    {c.codigo}
-                  </TableCell>
-                  <TableCell className="text-center text-sm">
-                    {c.nome_servo}
-                  </TableCell>
-                  <TableCell className="text-center text-sm">
-                    {c.nome_encontrista ?? "—"}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {c.ativo ? (
-                      <Badge className="bg-green-600">Ativo</Badge>
-                    ) : (
-                      <Badge variant="outline">Inativo</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-center text-sm">
-                    {new Date(c.created_at).toLocaleDateString("pt-BR")}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => openEdit(c)}
-                        title="Editar"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleCopy(c.codigo)}
-                        title="Copiar código"
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteClick(c.id)}
-                        title="Excluir"
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </TableCell>
+      <div className="min-h-0 flex-1">
+        {isLoading ? (
+          <p className="text-muted-foreground">Carregando...</p>
+        ) : cupons.length === 0 ? (
+          <p className="text-muted-foreground">Nenhum cupom cadastrado.</p>
+        ) : (
+          <div className="max-h-[calc(100vh-230px)] overflow-auto rounded-md border">
+            <Table className="min-w-[820px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-center whitespace-nowrap">
+                    Código
+                  </TableHead>
+                  <TableHead className="text-center whitespace-nowrap">
+                    Nome do servo
+                  </TableHead>
+                  <TableHead className="text-center whitespace-nowrap">
+                    Encontrista
+                  </TableHead>
+                  <TableHead className="text-center whitespace-nowrap">
+                    Status
+                  </TableHead>
+                  <TableHead className="text-center whitespace-nowrap">
+                    Criado em
+                  </TableHead>
+                  <TableHead className="w-28 whitespace-nowrap">
+                    Ações
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+              </TableHeader>
+              <TableBody>
+                {cupons.map((c) => (
+                  <TableRow key={c.id}>
+                    <TableCell className="font-mono text-center text-sm">
+                      {c.codigo}
+                    </TableCell>
+                    <TableCell className="text-center text-sm">
+                      {c.nome_servo}
+                    </TableCell>
+                    <TableCell className="text-center text-sm">
+                      {c.nome_encontrista ?? "—"}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {c.ativo ? (
+                        <Badge className="bg-green-600">Ativo</Badge>
+                      ) : (
+                        <Badge variant="outline">Inativo</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center text-sm">
+                      {new Date(c.created_at).toLocaleDateString("pt-BR")}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openEdit(c)}
+                          title="Editar"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleCopy(c.codigo)}
+                          title="Copiar código"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteClick(c.id)}
+                          title="Excluir"
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </div>
 
       {/* Create Dialog */}
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
