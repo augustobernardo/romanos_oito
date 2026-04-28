@@ -11,7 +11,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:hooks": "vitest src/test/integration/hooks/useOikosForm.test.tsx"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

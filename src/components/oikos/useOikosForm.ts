@@ -116,6 +116,15 @@ export const useOikosForm = () => {
     setPaymentMethod(method);
   };
 
+  const getInscricaoErrorMessage = (error: unknown) => {
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.toLowerCase().includes("cupom servo amigo")) {
+      return "Este cupom Servo Amigo já foi utilizado ou está inativo.";
+    }
+
+    return "Tente novamente mais tarde.";
+  };
+
   const handleCreditPayment = async () => {
     if (!loteSelecionado) {
       toast({
@@ -137,23 +146,13 @@ export const useOikosForm = () => {
       );
       if (error) throw error;
 
-      if (cupomServoCodigo) {
-        // Desativa o cupom de servo após uso bem-sucedido (uso único por inscrição).
-        // Falhas aqui não devem bloquear o fluxo do usuário.
-        try {
-          await CuponsServoService.desativar(cupomServoCodigo);
-        } catch (deactivateError) {
-          console.error("Erro ao desativar cupom servo:", deactivateError);
-        }
-      }
-
       goToPaymentLink();
       setCurrentStep("confirmation");
     } catch (error) {
       console.error("Erro ao salvar inscrição:", error);
       toast({
         title: "Erro ao processar inscrição",
-        description: "Tente novamente mais tarde.",
+        description: getInscricaoErrorMessage(error),
         variant: "destructive",
       });
     }
@@ -272,21 +271,12 @@ export const useOikosForm = () => {
         if (updateError) throw updateError;
       }
 
-      if (cupomServoCodigo) {
-        // Desativa o cupom de servo após uso bem-sucedido (uso único por inscrição).
-        try {
-          await CuponsServoService.desativar(cupomServoCodigo);
-        } catch (deactivateError) {
-          console.error("Erro ao desativar cupom servo:", deactivateError);
-        }
-      }
-
       setCurrentStep("confirmation");
     } catch (error) {
       console.error("Erro ao processar pagamento PIX:", error);
       toast({
         title: "Erro ao processar pagamento",
-        description: "Tente novamente ou entre em contato conosco.",
+        description: getInscricaoErrorMessage(error),
         variant: "destructive",
       });
     } finally {
