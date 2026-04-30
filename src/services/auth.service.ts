@@ -7,7 +7,29 @@ export const AuthService = {
   },
 
   async signIn(email: string, password: string) {
-    return await supabase.auth.signInWithPassword({ email, password });
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+
+    const response = await fetch(`${apiBaseUrl}/api/auth/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      return { error: new Error(errorData.message || "Erro ao fazer login") };
+    }
+
+    const data = await response.json();
+
+    const { error } = await supabase.auth.setSession({
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+    });
+
+    return { error };
   },
 
   async signOut() {
@@ -21,12 +43,20 @@ export const AuthService = {
   },
 
   async checkAdmin(userId: string): Promise<boolean> {
-    const { data } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .eq("role", "admin")
-      .maybeSingle();
-    return !!data;
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (!session) return false;
+
+    const response = await fetch(`${apiBaseUrl}/api/auth/me`, {
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    });
+
+    if (!response.ok) return false;
+
+    const data = await response.json();
+    return Array.isArray(data.roles) && data.roles.includes("admin");
   },
 };

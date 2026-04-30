@@ -44,7 +44,6 @@ import {
   columnLabels,
   createUniqueKey,
   formatNamesStringsInscricao,
-  getUniqueRecentInscricoes,
 } from "@/lib/utils";
 import {
   handleDownloadComprovante,
@@ -208,9 +207,7 @@ const AdminInscricoes = () => {
   const allInscricoes = rawInscricoes;
   const inscricoes = useMemo(
     () =>
-      formatNamesStringsInscricao(
-        getUniqueRecentInscricoes(rawInscricoes),
-      ) as InscricaoWithServo[],
+      formatNamesStringsInscricao(rawInscricoes) as InscricaoWithServo[],
     [rawInscricoes],
   );
 
