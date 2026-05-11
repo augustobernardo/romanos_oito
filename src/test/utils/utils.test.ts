@@ -3,6 +3,9 @@
  */
 import { describe, it, expect } from "vitest";
 import { cn, createUniqueKey, getUniqueRecentInscricoes } from "@/lib/utils";
+import type { Tables } from "@/integrations/supabase/types";
+
+type Inscricao = Tables<"inscricoes">;
 
 describe("cn (className merge)", () => {
   it("combina classes simples", () => {
@@ -14,13 +17,13 @@ describe("cn (className merge)", () => {
   });
 
   it("lida com valores condicionais", () => {
-    expect(cn("base", false && "hidden", "visible")).toBe("base visible");
+    expect(cn("base", false, "visible")).toBe("base visible");
   });
 });
 
 describe("createUniqueKey", () => {
   it("cria chave única normalizada por nome e telefone", () => {
-    const inscricao = { nome: " João Silva ", telefone: " 11999999999 " } as any;
+    const inscricao = { nome: " João Silva ", telefone: " 11999999999 " } as Partial<Inscricao> as Inscricao;
     expect(createUniqueKey(inscricao)).toBe("joão silva_11999999999");
   });
 });
@@ -31,12 +34,12 @@ describe("getUniqueRecentInscricoes", () => {
       { nome: "João", telefone: "11999", created_at: "2026-01-01T00:00:00Z" },
       { nome: "João", telefone: "11999", created_at: "2026-01-02T00:00:00Z" },
       { nome: "Maria", telefone: "11888", created_at: "2026-01-01T00:00:00Z" },
-    ] as any[];
+    ] as Partial<Inscricao>[] as Inscricao[];
 
     const result = getUniqueRecentInscricoes(inscricoes);
     expect(result).toHaveLength(2);
     
-    const joao = result.find((r: any) => r.nome === "João");
+    const joao = result.find((r: Inscricao) => r.nome === "João");
     expect(joao?.created_at).toBe("2026-01-02T00:00:00Z");
   });
 
