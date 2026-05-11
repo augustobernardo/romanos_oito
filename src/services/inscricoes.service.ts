@@ -3,114 +3,34 @@ import type { TablesInsert, Tables } from "@/integrations/supabase/types";
 import { STORAGE_BUCKET } from "@/lib/storage";
 import { mapFormToInscricao } from "@/config/inscricaoMapper";
 
-async function getAuthToken(): Promise<string> {
-  const { data: { session }, error } = await supabase.auth.getSession();
-  if (error || !session) {
-    throw new Error("Usuário não autenticado");
-  }
-  return session.access_token;
-}
-
 export const InscricoesService = {
   async findAll() {
-    const token = await getAuthToken();
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+    const { data, error } = await supabase
+      .from("inscricoes")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-    const allInscricoes: Tables<"inscricoes">[] = [];
-    let page = 1;
-    const limit = 100;
-
-    while (true) {
-      const url = `${apiBaseUrl}/api/subscriptions/?page=${page}&limit=${limit}`;
-      const response = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        return { data: null, error: new Error(errorData.message || "Erro ao buscar inscrições") };
-      }
-
-      const result = await response.json();
-      allInscricoes.push(...result.data);
-
-      if (result.data.length < limit || allInscricoes.length >= result.total) {
-        break;
-      }
-      page++;
-    }
-
-    return { data: allInscricoes, error: null };
+    return { data, error };
   },
 
   async updateStatus(id: string, status: string) {
-    const token = await getAuthToken();
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+    const { data, error } = await supabase
+      .from("inscricoes")
+      .update({ status })
+      .eq("id", id)
+      .select()
+      .single();
 
-    const response = await fetch(`${apiBaseUrl}/api/subscriptions/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ status }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || "Erro ao atualizar status");
-    }
-
-    const data = await response.json();
-    return { data, error: null };
+    return { data, error };
   },
 
   async deleteByIds(ids: string[]) {
-    const token = await getAuthToken();
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+    const { error } = await supabase
+      .from("inscricoes")
+      .delete()
+      .in("id", ids);
 
-    for (const id of ids) {
-      const response = await fetch(`${apiBaseUrl}/api/subscriptions/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok && response.status !== 204) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Erro ao excluir inscrição");
-      }
-    }
-  },
-
-  async insert(data: TablesInsert<"inscricoes">) {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-    if (sessionError || !session) {
-      console.error("Erro ao obter sessão:", sessionError);
-      throw new Error("Usuário não autenticado");
-    }
-
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
-
-    const response = await fetch(`${apiBaseUrl}/api/subscriptions/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || "Erro ao criar inscrição");
-    }
-
-    return await response.json();
+    if (error) throw error;
   },
 
   async updateComprovante(id: string, comprovanteUrl: string) {
@@ -148,7 +68,7 @@ export const InscricoesService = {
       tamanhoCamisa: string;
       expectativaOikos: string;
     },
-    method: "credit" | "pix" | "cupom",
+    method: "pix" | "cupom" | "card_manual",
     status: string,
     cupomInfo?: { nomeTitular: string | null; comprovanteUrl: string | null },
     codigoServo?: string | null,
@@ -170,39 +90,53 @@ export const InscricoesService = {
     const { data } = await supabase.from("inscricoes").select("nome, telefone, created_at");
     if (!data || data.length === 0) return 0;
     const { getUniqueRecentInscricoes } = await import("@/lib/utils");
-    return getUniqueRecentInscricoes(data as any).length;
+    return getUniqueRecentInscricoes(data as Tables<"inscricoes">[]).length;
   },
 
   async getDashboardStats() {
-    const token = await getAuthToken();
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
-
-    const [eventsRes, batchesRes, subsRes] = await Promise.all([
-      fetch(`${apiBaseUrl}/api/events/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      }),
-      fetch(`${apiBaseUrl}/api/batchs/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      }),
-      fetch(`${apiBaseUrl}/api/subscriptions/stats`, {
-        headers: { Authorization: `Bearer ${token}` },
-      }),
+    const [inscricoesRes, lotesRes, eventosRes] = await Promise.all([
+      supabase.from("inscricoes").select("nome, telefone, created_at"),
+      supabase.from("lotes").select("id", { count: "exact", head: true }),
+      supabase.from("eventos").select("id", { count: "exact", head: true }),
     ]);
 
-    if (!eventsRes.ok || !batchesRes.ok || !subsRes.ok) {
-      throw new Error("Erro ao buscar dados do dashboard");
-    }
+    const { getUniqueRecentInscricoes } = await import("@/lib/utils");
+    const inscricoesCount = inscricoesRes.data
+      ? getUniqueRecentInscricoes(inscricoesRes.data as Tables<"inscricoes">[]).length
+      : 0;
 
-    const [events, batches, subsStats] = await Promise.all([
-      eventsRes.json(),
-      batchesRes.json(),
-      subsRes.json(),
+    return {
+      eventos: eventosRes.count ?? 0,
+      lotes: lotesRes.count ?? 0,
+      inscricoes: inscricoesCount,
+    };
+  },
+
+  async getOikosMetrics() {
+    const { getUniqueRecentInscricoes } = await import("@/lib/utils");
+
+    const [allRes, awaitingRes, paidRes] = await Promise.all([
+      supabase.from("inscricoes").select("nome, telefone, created_at, status"),
+      supabase
+        .from("inscricoes")
+        .select("nome, telefone, created_at, status")
+        .eq("status", "processando"),
+      supabase
+        .from("inscricoes")
+        .select("nome, telefone, created_at, status")
+        .eq("status", "confirmado"),
     ]);
 
     return {
-      eventos: Array.isArray(events) ? events.length : 0,
-      lotes: Array.isArray(batches) ? batches.length : 0,
-      inscricoes: subsStats.total ?? 0,
+      total: allRes.data
+        ? getUniqueRecentInscricoes(allRes.data as Tables<"inscricoes">[]).length
+        : 0,
+      awaiting_confirmation: awaitingRes.data
+        ? getUniqueRecentInscricoes(awaitingRes.data as Tables<"inscricoes">[]).length
+        : 0,
+      paid: paidRes.data
+        ? getUniqueRecentInscricoes(paidRes.data as Tables<"inscricoes">[]).length
+        : 0,
     };
   },
 };

@@ -11,7 +11,7 @@ import { Search, ArrowUpDown, ArrowUp, ArrowDown, Download } from "lucide-react"
 import * as XLSX from "xlsx";
 import type { Tables } from "@/integrations/supabase/types";
 
-type Inscricao = Tables<"inscricoes">;
+type Inscricao = Tables<"inscricoes"> & { idade?: number | null };
 type SortKey = "nome" | "created_at";
 type SortDir = "asc" | "desc";
 
@@ -105,7 +105,7 @@ const AdminInscricoes = () => {
     const rows = sorted.map((i) => {
       const row: Record<string, string> = {};
       for (const key of Object.keys(columnLabels)) {
-        let val = (i as any)[key] ?? "";
+        let val = (i as Record<string, unknown>)[key] ?? "";
         if (key === "created_at") {
           val = new Date(val).toLocaleDateString("pt-BR");
         }
@@ -172,7 +172,7 @@ const AdminInscricoes = () => {
                   <TableCell className="text-center truncate max-w-[140px]" title={i.comunidade}>{i.comunidade}</TableCell>
                   <TableCell className="text-center truncate max-w-[130px]" title={i.cidade_estado}>{i.cidade_estado}</TableCell>
                   <TableCell className="text-center">{i.tamanho_camisa}</TableCell>
-                  <TableCell className="text-center">{(i as any).idade ?? "—"}</TableCell>
+                  <TableCell className="text-center">{i.idade ?? "—"}</TableCell>
                   <TableCell className="text-center"><Badge variant={statusColor(i.status)}>{i.status}</Badge></TableCell>
                   <TableCell className="text-sm text-center">{new Date(i.created_at).toLocaleDateString("pt-BR")}</TableCell>
                 </TableRow>

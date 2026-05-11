@@ -25,6 +25,9 @@ import {
   QrCode,
   Eye,
   Tag,
+  AlertCircle,
+  RefreshCw,
+  RotateCcw,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import type { Tables } from "@/integrations/supabase/types";
@@ -36,7 +39,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "../ui/dialog";
 import { Label } from "../ui/label";
 import { ConfirmDialog } from "./ConfirmDialog";
@@ -44,11 +46,20 @@ import {
   columnLabels,
   createUniqueKey,
   formatNamesStringsInscricao,
+  getUniqueRecentInscricoes,
 } from "@/lib/utils";
 import {
   handleDownloadComprovante,
   handleViewComprovante,
 } from "@/lib/storage";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { InscricoesMetricsCards } from "./InscricoesMetricsCards";
 
 type Inscricao = Tables<"inscricoes">;
 type InscricaoWithServo = Inscricao & {
@@ -60,7 +71,6 @@ type SortDir = "asc" | "desc";
 const formatPhone = (phone: string) =>
   phone.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
 
-// Sanitize values to prevent CSV/Excel formula injection
 const sanitizeForExport = (val: string): string => {
   if (
     val.startsWith("=") ||
@@ -77,7 +87,6 @@ const sanitizeForExport = (val: string): string => {
 
 const emptyInscricao = { status: "" };
 
-// Função para formatar o método de pagamento para exibição
 const formatPaymentMethod = (method: string | null) => {
   if (!method) return "—";
 
@@ -95,6 +104,15 @@ const formatPaymentMethod = (method: string | null) => {
       label: "PIX",
       icon: (
         <QrCode
+          className="h-3.5 w-3.5 mr-1"
+          style={{ color: "hsl(195,100%,45%)" }}
+        />
+      ),
+    },
+    card_manual: {
+      label: "Cartão SAC",
+      icon: (
+        <CreditCard
           className="h-3.5 w-3.5 mr-1"
           style={{ color: "hsl(195,100%,45%)" }}
         />
@@ -145,9 +163,17 @@ const AdminInscricoes = () => {
     count: number;
     ids: string[];
   } | null>(null);
+  const [filterStatus, setFilterStatus] = useState("");
+  const [filterMethod, setFilterMethod] = useState("");
 
   const refetch = () =>
     queryClient.invalidateQueries({ queryKey: ["inscricoes"] });
+
+  const { data: metrics, isLoading: metricsLoading } = useQuery({
+    queryKey: ["oikos-metrics"],
+    queryFn: InscricoesService.getOikosMetrics,
+    staleTime: 30_000,
+  });
 
   const inscricaoMutation = useMutation({
     mutationFn: async ({
@@ -176,7 +202,12 @@ const AdminInscricoes = () => {
     },
   });
 
-  const { data: rawInscricoes = [], isLoading } = useQuery({
+  const {
+    data: rawInscricoes = [],
+    isLoading,
+    isError,
+    refetch: refetchInscricoes,
+  } = useQuery({
     queryKey: ["inscricoes"],
     queryFn: async () => {
       const [inscricoesResult, cuponsServoResult] = await Promise.all([
@@ -203,12 +234,17 @@ const AdminInscricoes = () => {
     },
   });
 
-  // Derived data: all raw records for duplicate detection, and unique formatted for display
   const allInscricoes = rawInscricoes;
+
+  const uniqueInscricoes = useMemo(
+    () => getUniqueRecentInscricoes(rawInscricoes as Inscricao[]),
+    [rawInscricoes],
+  );
+
   const inscricoes = useMemo(
     () =>
-      formatNamesStringsInscricao(rawInscricoes) as InscricaoWithServo[],
-    [rawInscricoes],
+      formatNamesStringsInscricao(uniqueInscricoes as InscricaoWithServo[]),
+    [uniqueInscricoes],
   );
 
   const toggleSort = (key: SortKey) => {
@@ -216,10 +252,9 @@ const AdminInscricoes = () => {
       setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     } else {
       setSortKey(key);
-      // Define direção padrão para cada coluna
       if (key === "nome") setSortDir("asc");
       else if (key === "metodo_pagamento") setSortDir("asc");
-      else setSortDir("desc"); // created_at padrão descendente
+      else setSortDir("desc");
     }
   };
 
@@ -234,12 +269,20 @@ const AdminInscricoes = () => {
   };
 
   const sorted = useMemo(() => {
-    const filtered = inscricoes.filter(
+    let filtered = inscricoes.filter(
       (i) =>
         i.nome.toLowerCase().includes(search.toLowerCase()) ||
         i.telefone.includes(search) ||
         i.comunidade.toLowerCase().includes(search.toLowerCase()),
     );
+
+    if (filterStatus) {
+      filtered = filtered.filter((i) => i.status === filterStatus);
+    }
+
+    if (filterMethod) {
+      filtered = filtered.filter((i) => i.metodo_pagamento === filterMethod);
+    }
 
     return [...filtered].sort((a, b) => {
       if (sortKey === "nome") {
@@ -256,11 +299,12 @@ const AdminInscricoes = () => {
         new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
       return sortDir === "asc" ? cmp : -cmp;
     });
-  }, [inscricoes, search, sortKey, sortDir]);
+  }, [inscricoes, search, filterStatus, filterMethod, sortKey, sortDir]);
 
   const statusColor = (s: string) => {
     if (s === "confirmado") return "default";
     if (s === "processando") return "secondary";
+    if (s === "pending") return "secondary";
     return "destructive";
   };
 
@@ -272,11 +316,9 @@ const AdminInscricoes = () => {
         if (key === "created_at") {
           val = new Date(val).toLocaleDateString("pt-BR");
         }
-
         if (key === "telefone") {
           val = formatPhone(val);
         }
-
         if (key == "data_nascimento") {
           val = val ? new Date(val).toLocaleDateString("pt-BR") : "";
         }
@@ -294,14 +336,12 @@ const AdminInscricoes = () => {
     );
   };
 
-  // Função para abrir o modal de edição
   const openEdit = (inscricao: Inscricao) => {
     setEditing(inscricao);
     setForm({ status: inscricao.status });
     setOpen(true);
   };
 
-  // Função para salvar (apenas atualização)
   const handleSave = async () => {
     if (!form.status) {
       toast.error("Status é obrigatório");
@@ -326,10 +366,8 @@ const AdminInscricoes = () => {
   const handleConfirmDelete = async () => {
     if (!selectedId) return;
 
-    // Fecha o modal imediatamente
     setDeleteDialogOpen(false);
 
-    // Antes de excluir, verifica se existem registros duplicados
     const inscricaoToDelete = allInscricoes.find((i) => i.id === selectedId);
 
     if (inscricaoToDelete) {
@@ -339,7 +377,6 @@ const AdminInscricoes = () => {
       );
 
       if (duplicates.length > 1) {
-        // Se houver duplicatas, abre o modal de duplicatas
         setDuplicatesInfo({
           count: duplicates.length,
           ids: duplicates.map((d) => d.id),
@@ -349,12 +386,10 @@ const AdminInscricoes = () => {
       }
     }
 
-    // Se não houver duplicatas, executa a exclusão
     await executeDelete([selectedId]);
   };
 
   const handleDeleteSingle = async () => {
-    // Fecha o modal de duplicatas imediatamente
     setDuplicateDialogOpen(false);
 
     if (selectedId) {
@@ -363,7 +398,6 @@ const AdminInscricoes = () => {
   };
 
   const handleDeleteAllDuplicates = async () => {
-    // Fecha o modal de duplicatas imediatamente
     setDuplicateDialogOpen(false);
 
     if (duplicatesInfo) {
@@ -406,7 +440,6 @@ const AdminInscricoes = () => {
 
   return (
     <AdminLayout>
-      {/* Dialog de preview do comprovante */}
       <Dialog open={previewDialogOpen} onOpenChange={setPreviewDialogOpen}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
@@ -426,7 +459,6 @@ const AdminInscricoes = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog de confirmação de exclusão */}
       <ConfirmDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
@@ -434,7 +466,6 @@ const AdminInscricoes = () => {
         onConfirm={handleConfirmDelete}
       />
 
-      {/* Dialog para múltiplas inscrições */}
       <Dialog open={duplicateDialogOpen} onOpenChange={setDuplicateDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -484,57 +515,95 @@ const AdminInscricoes = () => {
         </DialogContent>
       </Dialog>
 
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="font-normal">
+              Editar Status da Inscrição
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Status do Pagamento</Label>
+              <select
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                value={form.status}
+                onChange={(e) => setForm({ ...form, status: e.target.value })}
+              >
+                <option value="pending">Pendente</option>
+                <option value="processando">Processando</option>
+                <option value="confirmado">Confirmado</option>
+                <option value="cancelado">Cancelado</option>
+              </select>
+            </div>
+            <Button className="w-full" onClick={handleSave}>
+              Salvar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <div className="mb-6 space-y-4">
         <h1 className="font-display text-2xl font-normal uppercase text-foreground">
           Inscrições
         </h1>
-        {/* Dialog Update Status */}
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle className="font-normal">
-                Editar Status da Inscrição
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label>Status do Pagamento</Label>
-                <select
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  value={form.status}
-                  onChange={(e) => setForm({ ...form, status: e.target.value })}
-                >
-                  <option value="processando">Processando</option>
-                  <option value="confirmado">Confirmado</option>
-                  <option value="cancelado">Cancelado</option>
-                </select>
-              </div>
-              <Button className="w-full" onClick={handleSave}>
-                Salvar
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-        <div className="relative w-full max-w-xs">
-          <div className="flex items-center gap-2">
-            <div className="relative w-full max-w-xs">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                className="pl-9"
-                placeholder="Buscar por nome, telefone..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 whitespace-nowrap"
-              onClick={exportToExcel}
-            >
-              <Download className="h-4 w-4" /> Exportar
-            </Button>
+
+        <InscricoesMetricsCards metrics={metrics ?? null} isLoading={metricsLoading} />
+
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="relative min-w-[200px] max-w-[280px] flex-1">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              className="pl-9"
+              placeholder="Buscar por nome, telefone..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </div>
+
+          <Select value={filterStatus || undefined} onValueChange={(v) => setFilterStatus(v === " " ? "" : v)}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value=" ">Todos</SelectItem>
+              <SelectItem value="processando">Processando</SelectItem>
+              <SelectItem value="confirmado">Confirmado</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={filterMethod || undefined} onValueChange={(v) => setFilterMethod(v === " " ? "" : v)}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Método" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value=" ">Todos</SelectItem>
+              <SelectItem value="pix">PIX</SelectItem>
+              <SelectItem value="card_manual">Cartão SAC</SelectItem>
+              <SelectItem value="cupom">Especial</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {(filterStatus || filterMethod) && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => { setFilterStatus(""); setFilterMethod(""); }}
+              className="shrink-0"
+              title="Limpar filtros"
+            >
+              <RotateCcw className="h-4 w-4" />
+            </Button>
+          )}
+
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 whitespace-nowrap ml-auto"
+            onClick={exportToExcel}
+          >
+            <Download className="h-4 w-4" /> Exportar
+          </Button>
         </div>
       </div>
 
@@ -544,6 +613,24 @@ const AdminInscricoes = () => {
 
       {isLoading ? (
         <p className="text-muted-foreground">Carregando...</p>
+      ) : isError ? (
+        <div className="flex flex-col items-center gap-4 rounded-lg border border-red-200 bg-red-50 p-8">
+          <AlertCircle className="h-8 w-8 text-red-500" />
+          <p className="text-sm font-medium text-red-700">
+            Erro ao carregar inscrições
+          </p>
+          <p className="text-xs text-red-600">
+            Verifique se o Supabase está acessível.
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetchInscricoes()}
+          >
+            <RefreshCw className="h-4 w-4 mr-1" />
+            Tentar novamente
+          </Button>
+        </div>
       ) : (
         <div className="rounded-md border overflow-x-auto max-h-[70vh] overflow-y-auto">
           <Table className="min-w-[1400px] table-fixed">

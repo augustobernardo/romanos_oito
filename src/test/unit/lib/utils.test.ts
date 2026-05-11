@@ -4,6 +4,9 @@
  */
 import { describe, it, expect } from "vitest";
 import { formatNamesString, formatNamesStringsInscricao, columnLabels } from "@/lib/utils";
+import type { Tables } from "@/integrations/supabase/types";
+
+type Inscricao = Tables<"inscricoes">;
 
 describe("formatNamesString", () => {
   it("capitaliza a primeira letra de cada palavra", () => {
@@ -31,8 +34,8 @@ describe("formatNamesStringsInscricao", () => {
         comunidade: "paróquia são josé",
         cidade_estado: "são paulo - sp",
       },
-    ] as any[];
-    const result = formatNamesStringsInscricao(inscricoes);
+    ] as Partial<Inscricao>[];
+    const result = formatNamesStringsInscricao(inscricoes as Inscricao[]);
     expect(result[0].nome).toBe("João Silva");
     expect(result[0].comunidade).toBe("Paróquia São José");
     expect(result[0].cidade_estado).toBe("São Paulo - Sp");
@@ -47,8 +50,8 @@ describe("formatNamesStringsInscricao", () => {
         comunidade: "igreja",
         cidade_estado: "rio - rj",
       },
-    ] as any[];
-    const result = formatNamesStringsInscricao(inscricoes);
+    ] as Partial<Inscricao>[];
+    const result = formatNamesStringsInscricao(inscricoes as Inscricao[]);
     expect(result[0].telefone).toBe("11912345678");
     expect(result[0].instagram).toBe("@maria");
   });

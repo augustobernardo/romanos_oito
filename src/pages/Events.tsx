@@ -32,7 +32,7 @@ const getFormatDate = (date: Date) => {
   };
 };
 
-const formatDateEvent = (evento: any) => {
+const formatDateEvent = (evento: { data_inicio: string; data_fim: string }) => {
   const startDate = new Date(evento.data_inicio);
   const endDate = new Date(evento.data_fim);
 
@@ -49,8 +49,8 @@ const formatDateEvent = (evento: any) => {
 // REMOVE SOON
 // This is a temporary function to add a specific route for the OIKOS 2026 event.
 // ===============================================================================
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const addRoteForOIKOS = (eventos: any[]) => {
+type EventoItem = Record<string, unknown>;
+const addRoteForOIKOS = (eventos: EventoItem[]) => {
   return eventos.map((evento) => {
     if (evento.nome === "OIKOS 2026") {
       return { ...evento, rota: "/eventos/oikos-2026" };

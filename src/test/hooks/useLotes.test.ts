@@ -1,10 +1,8 @@
 /**
  * Tests for useLotes hook and helper functions.
- * Tests the pure functions (getLoteDisponivel, getLoteDisponivelPaymentLink)
- * without mocking Supabase queries.
  */
 import { describe, it, expect } from "vitest";
-import { getLoteDisponivel, getLoteDisponivelPaymentLink } from "@/hooks/useLotes";
+import { getLoteDisponivel } from "@/hooks/useLotes";
 
 const makeLote = (overrides: Partial<ReturnType<typeof defaultLote>> = {}) => {
   const defaults = defaultLote();
@@ -14,7 +12,6 @@ const makeLote = (overrides: Partial<ReturnType<typeof defaultLote>> = {}) => {
 function defaultLote() {
   return {
     id: 1,
-    id_payment_link: "link-1",
     nome: "Lote 1",
     preco: "100.00",
     status: "disponivel" as const,
@@ -50,29 +47,5 @@ describe("getLoteDisponivel", () => {
 
   it("retorna null para array vazio", () => {
     expect(getLoteDisponivel([])).toBeNull();
-  });
-});
-
-describe("getLoteDisponivelPaymentLink", () => {
-  it("retorna o payment link do lote solicitado", () => {
-    const lotes = [
-      makeLote({ id: 1, id_payment_link: "link-1" }),
-      makeLote({ id: 2, id_payment_link: "link-2" }),
-    ];
-    expect(getLoteDisponivelPaymentLink(lotes, 2)).toBe("link-2");
-  });
-
-  it("retorna null quando lote não existe", () => {
-    const lotes = [makeLote({ id: 1 })];
-    expect(getLoteDisponivelPaymentLink(lotes, 99)).toBeNull();
-  });
-
-  it("retorna null quando lote está esgotado", () => {
-    const lotes = [makeLote({ id: 1, status: "esgotado" })];
-    expect(getLoteDisponivelPaymentLink(lotes, 1)).toBeNull();
-  });
-
-  it("retorna null para array vazio", () => {
-    expect(getLoteDisponivelPaymentLink([], 1)).toBeNull();
   });
 });

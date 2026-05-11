@@ -4,7 +4,6 @@ export type LoteStatus = "disponivel" | "esgotado" | "embreve" | "indisponivel";
 
 export interface LoteInfo {
   id: number;
-  id_payment_link: string;
   nome: string;
   preco: string;
   status: LoteStatus;

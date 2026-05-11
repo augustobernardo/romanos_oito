@@ -2,6 +2,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 export const STORAGE_BUCKET = "Comprovantes_OIKOS";
+export const PENTECOSTE_STORAGE_BUCKET = "pentecoste-payment-proofs";
 
 /** Extract the file path from a URL or return as-is if already a path. */
 export const extractFilePathFromUrl = (url: string): string => {
@@ -17,16 +18,17 @@ export const extractFilePathFromUrl = (url: string): string => {
   return url;
 };
 
-/** Get a signed URL for a file in the Comprovantes_OIKOS bucket. */
+/** Get a signed URL for a file in the given bucket. */
 export const getComprovanteSignedUrl = async (
   comprovanteUrl: string,
+  bucket: string = STORAGE_BUCKET,
 ): Promise<string | null> => {
   const filePath = extractFilePathFromUrl(comprovanteUrl);
   if (!filePath) return null;
 
   const { data, error } = await supabase.storage
-    .from(STORAGE_BUCKET)
-    .createSignedUrl(filePath, 60 * 60); // 60 minutes
+    .from(bucket)
+    .createSignedUrl(filePath, 60 * 60);
 
   if (error) throw error;
   return data?.signedUrl ?? null;
@@ -38,10 +40,11 @@ export const handleViewComprovante = async (
   nome: string,
   setLoading: (loading: boolean) => void,
   onPreview: (url: string, nome: string) => void,
+  bucket: string = STORAGE_BUCKET,
 ) => {
   setLoading(true);
   try {
-    const signedUrl = await getComprovanteSignedUrl(comprovanteUrl);
+    const signedUrl = await getComprovanteSignedUrl(comprovanteUrl, bucket);
     if (signedUrl) {
       onPreview(signedUrl, nome);
     } else {
@@ -59,6 +62,7 @@ export const handleDownloadComprovante = async (
   comprovanteUrl: string,
   nome: string,
   setLoading: (loading: boolean) => void,
+  bucket: string = STORAGE_BUCKET,
 ) => {
   setLoading(true);
   try {
@@ -68,7 +72,7 @@ export const handleDownloadComprovante = async (
       return;
     }
 
-    const signedUrl = await getComprovanteSignedUrl(comprovanteUrl);
+    const signedUrl = await getComprovanteSignedUrl(comprovanteUrl, bucket);
     if (!signedUrl) {
       toast.error("Erro ao gerar link do comprovante");
       return;
@@ -92,15 +96,16 @@ export const handleDownloadComprovante = async (
 export const uploadComprovante = async (
   file: File,
   path: string,
+  bucket: string = STORAGE_BUCKET,
 ): Promise<string> => {
   const { error: uploadError } = await supabase.storage
-    .from(STORAGE_BUCKET)
+    .from(bucket)
     .upload(path, file, { upsert: true });
 
   if (uploadError) throw uploadError;
 
   const { data: urlData } = supabase.storage
-    .from(STORAGE_BUCKET)
+    .from(bucket)
     .getPublicUrl(path);
 
   return urlData.publicUrl;

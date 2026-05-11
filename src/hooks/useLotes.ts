@@ -5,14 +5,12 @@ import type { LoteInfo } from "@/components/form/LoteCard";
 
 const mapLote = (l: {
   id: number;
-  id_payment_link: string | null;
   nome: string;
   preco: string;
   status: string | null;
   is_especial: boolean | null;
 }): LoteInfo => ({
   id: l.id,
-  id_payment_link: l.id_payment_link ?? "",
   nome: l.nome,
   preco: l.preco,
   status: (l.status ?? "esgotado") as "disponivel" | "esgotado",
@@ -40,17 +38,6 @@ export const useLotes = () => {
 export const getLoteDisponivel = (lotes: LoteInfo[]): number | null => {
   for (const lote of lotes) {
     if (lote.status === "disponivel" && !lote.is_especial) return lote.id;
-  }
-  return null;
-};
-
-export const getLoteDisponivelPaymentLink = (
-  lotes: LoteInfo[],
-  loteId: number,
-): string | null => {
-  const lote = lotes.find((l) => l.id === loteId);
-  if (lote && lote.status === "disponivel") {
-    return lote.id_payment_link;
   }
   return null;
 };

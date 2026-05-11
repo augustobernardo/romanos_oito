@@ -2,7 +2,8 @@
  * Tests for the inscricaoMapper: calculateAge and mapFormToInscricao.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { calculateAge, mapFormToInscricao } from "@/config/inscricaoMapper";
+import { calculateAge } from "@/utils/dateUtils";
+import { mapFormToInscricao } from "@/config/inscricaoMapper";
 
 describe("calculateAge", () => {
   beforeEach(() => {
@@ -10,22 +11,22 @@ describe("calculateAge", () => {
   });
 
   it("calcula idade correta para aniversário já passado", () => {
-    vi.setSystemTime(new Date(2026, 3, 15)); // April 15, 2026
+    vi.setSystemTime(new Date(2026, 3, 15));
     expect(calculateAge("1990-03-10")).toBe(36);
   });
 
   it("calcula idade para aniversário ainda não ocorrido no ano", () => {
-    vi.setSystemTime(new Date(2026, 3, 15)); // April 15, 2026
+    vi.setSystemTime(new Date(2026, 3, 15));
     expect(calculateAge("1990-05-20")).toBe(35);
   });
 
   it("calcula idade para aniversário no mesmo dia", () => {
-    vi.setSystemTime(new Date(2026, 3, 15)); // April 15, 2026
+    vi.setSystemTime(new Date(2026, 3, 15));
     expect(calculateAge("2000-04-15")).toBe(26);
   });
 
   it("calcula zero para recém-nascido", () => {
-    vi.setSystemTime(new Date(2026, 0, 1)); // Jan 1, 2026
+    vi.setSystemTime(new Date(2026, 0, 1));
     expect(calculateAge("2025-12-30")).toBe(0);
   });
 });
@@ -85,8 +86,15 @@ describe("mapFormToInscricao", () => {
     expect(result.lote_especial).toBe(true);
   });
 
-  it("define lote_especial como false para método credit", () => {
-    const result = mapFormToInscricao(1, validFormData, "credit", "confirmado");
+  it("define lote_especial como false para método pix", () => {
+    const result = mapFormToInscricao(1, validFormData, "pix", "confirmado");
+    expect(result.lote_especial).toBe(false);
+  });
+
+  it("define metodo_pagamento como card_manual", () => {
+    const result = mapFormToInscricao(1, validFormData, "card_manual", "pending");
+    expect(result.metodo_pagamento).toBe("card_manual");
+    expect(result.status).toBe("pending");
     expect(result.lote_especial).toBe(false);
   });
 

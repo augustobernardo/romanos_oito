@@ -20,7 +20,6 @@ const OikosFormSection = () => {
     currentStep,
     loteSelecionado,
     setLoteSelecionado,
-    paymentMethod,
     comprovanteFile,
     comprovantePreview,
     uploading,
@@ -31,18 +30,17 @@ const OikosFormSection = () => {
     cupomServoCode,
     setCupomServoCode,
     cupomServoValidating,
+    paymentMethodUsed,
     form,
     lotes,
     lotesLoading,
     loteDisponivelId,
     isLoteEspecialSelected,
     handleFormSubmit,
-    handlePaymentMethodSelect,
-    handleCreditPayment,
     handleCupomValidation,
     handleCupomPayment,
     handlePixPayment,
-    handleCopyPixKey,
+    handleCardManualPayment,
     handleFileChange,
     clearComprovante,
     handleBackToForm,
@@ -52,7 +50,7 @@ const OikosFormSection = () => {
   } = useOikosForm();
 
   if (currentStep === "confirmation") {
-    return <ConfirmationScreen paymentMethod={paymentMethod} />;
+    return <ConfirmationScreen variant={paymentMethodUsed === "card_manual" ? "card_manual" : "pix"} />;
   }
 
   if (currentStep === "cupom_validation") {
@@ -84,16 +82,12 @@ const OikosFormSection = () => {
     return (
       <PaymentStep
         isEspecial={isLoteEspecialSelected()}
-        paymentMethod={paymentMethod}
         comprovantePreview={comprovantePreview}
         comprovanteFile={comprovanteFile}
         uploading={uploading}
         cupomInfo={cupomInfo}
-        onSelectMethod={handlePaymentMethodSelect}
-        onCreditPayment={handleCreditPayment}
-        onCupomPayment={handleCupomPayment}
         onPixPayment={handlePixPayment}
-        onCopyPixKey={handleCopyPixKey}
+        onCardManualPayment={handleCardManualPayment}
         onFileChange={handleFileChange}
         onClearComprovante={clearComprovante}
         onBack={handleBackFromPaymentToForm}

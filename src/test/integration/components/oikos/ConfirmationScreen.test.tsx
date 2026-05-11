@@ -1,59 +1,52 @@
 /**
- * Tests for ConfirmationScreen component.
- * Verifies messages for each payment method.
+ * Tests for ConfirmationScreen component (PIX + card_manual variants).
  */
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { ConfirmationScreen } from "@/components/oikos/ConfirmationScreen";
+import { ComponentProps } from "react";
 
-// Mock framer-motion to avoid animation issues in tests
 vi.mock("framer-motion", () => ({
   motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-    h2: ({ children, ...props }: any) => <h2 {...props}>{children}</h2>,
-    p: ({ children, ...props }: any) => <p {...props}>{children}</p>,
+    div: ({ ...props }: ComponentProps<"div">) => <div {...props} />,
+    h2: ({ ...props }: ComponentProps<"h2">) => <h2 {...props} />,
+    p: ({ ...props }: ComponentProps<"p">) => <p {...props} />,
   },
 }));
 
 describe("ConfirmationScreen", () => {
-  it("exibe mensagem de comprovante enviado para PIX", () => {
-    render(<ConfirmationScreen paymentMethod="pix" />);
+  it("exibe mensagem de comprovante enviado (variante pix padrão)", () => {
+    render(<ConfirmationScreen />);
     expect(screen.getByText("Comprovante enviado!")).toBeInTheDocument();
     expect(
-      screen.getByText(
-        "Seu comprovante foi enviado com sucesso para nossa equipe.",
-      ),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "Seja bem-vindo ao melhor fim de semana da sua vida. Dúvidas? Entre em contato com SAC (33) 99842-7416. Tmj, ehnois! Romanos Oito",
-      ),
+      screen.getByText(/Seu comprovante foi enviado com sucesso/),
     ).toBeInTheDocument();
   });
 
-  it("exibe mensagem de inscrição confirmada para cupom", () => {
-    render(<ConfirmationScreen paymentMethod="cupom" />);
-    expect(screen.getByText("Inscrição confirmada!")).toBeInTheDocument();
+  it("exibe mensagem de inscrição realizada para card_manual", () => {
+    render(<ConfirmationScreen variant="card_manual" />);
+    expect(screen.getByText("Inscrição realizada com sucesso!")).toBeInTheDocument();
     expect(
-      screen.getByText(
-        "Seu cupom foi validado e sua inscrição foi confirmada com sucesso!",
-      ),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/Nos vemos no OIKOS!/)).toBeInTheDocument();
-  });
-
-  it("exibe mensagem de redirecionamento para cartão de crédito", () => {
-    render(<ConfirmationScreen paymentMethod="credit" />);
-    expect(screen.getByText("Redirecionamento realizado!")).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "Você foi redirecionado para o ambiente seguro de pagamento.",
-      ),
+      screen.getByText(/Seu pagamento ficou pendente/),
     ).toBeInTheDocument();
   });
 
-  it("usa mensagem de cartão como fallback quando paymentMethod é null", () => {
-    render(<ConfirmationScreen paymentMethod={null} />);
-    expect(screen.getByText("Redirecionamento realizado!")).toBeInTheDocument();
+  it("exibe WhatsApp CTA para card_manual", () => {
+    render(<ConfirmationScreen variant="card_manual" />);
+    expect(screen.getByText("Falar com SAC no WhatsApp")).toBeInTheDocument();
+  });
+
+  it("exibe instrução final com contato SAC (variante pix)", () => {
+    render(<ConfirmationScreen />);
+    expect(
+      screen.getByText(/Seja bem-vindo ao melhor fim de semana da sua vida/),
+    ).toBeInTheDocument();
+  });
+
+  it("exibe mensagem de status automática", () => {
+    render(<ConfirmationScreen />);
+    expect(
+      screen.getByText(/Esta é uma mensagem automática/),
+    ).toBeInTheDocument();
   });
 });

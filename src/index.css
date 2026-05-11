@@ -195,6 +195,89 @@ html {
   background-size: 6px 6px;
 }
 
+/* Paper texture replicating the Pentecoste poster background */
+.bg-pentecoste-texture {
+  background-color: #eaeaea;
+  background-image:
+    radial-gradient(rgba(27, 37, 65, 0.06) 1px, transparent 1.2px),
+    radial-gradient(rgba(168, 50, 74, 0.04) 1px, transparent 1.2px),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.11  0 0 0 0 0.15  0 0 0 0 0.25  0 0 0 0.18 0'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.55'/></svg>");
+  background-size: 5px 5px, 7px 7px, 320px 320px;
+  background-position: 0 0, 2px 3px, 0 0;
+}
+
+/* Pentecoste form theming — replicates the editorial style of the hero image */
+.pentecoste-form label {
+  font-family: ui-monospace, monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-size: 0.7rem;
+  color: #1b2541;
+}
+.pentecoste-form input,
+.pentecoste-form [role="radiogroup"] {
+  border-radius: 0;
+}
+.pentecoste-form input {
+  border: 2px solid #1b2541;
+  background: transparent;
+  color: #1b2541;
+  font-family: ui-monospace, monospace;
+  letter-spacing: 0.05em;
+}
+.pentecoste-form input::placeholder {
+  color: rgba(27, 37, 65, 0.45);
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+}
+.pentecoste-form input:focus-visible {
+  outline: none;
+  box-shadow: 3px 3px 0 0 #a8324a;
+  border-color: #a8324a;
+}
+.pentecoste-form input {
+  transition: border-color 200ms ease, box-shadow 200ms ease, transform 200ms ease;
+}
+.pentecoste-form input:hover:not(:focus-visible) {
+  border-color: #a8324a;
+}
+.pentecoste-form [role="radio"],
+.pentecoste-form [role="checkbox"] {
+  transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+.pentecoste-form [role="radio"]:hover,
+.pentecoste-form [role="checkbox"]:hover {
+  transform: scale(1.05);
+}
+.pentecoste-form [role="radio"] {
+  border-color: #1b2541;
+  color: #a8324a;
+}
+.pentecoste-form [role="radio"][data-state="checked"] {
+  background: #a8324a;
+  color: #eaeaea;
+}
+.pentecoste-form [role="checkbox"] {
+  border-radius: 0;
+  border: 2px solid #a8324a;
+  background: transparent;
+  color: #eaeaea;
+}
+.pentecoste-form [role="checkbox"][data-state="checked"] {
+  background: #a8324a;
+  color: #eaeaea;
+  border-color: #a8324a;
+}
+.pentecoste-form .text-destructive,
+.pentecoste-form [role="alert"] {
+  color: #a8324a;
+  font-family: ui-monospace, monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+}
+
 .bg-halftone-green {
   background-color: #4ade80;
   background-image: radial-gradient(#16a34a 1.5px, transparent 1.5px);

@@ -81,7 +81,7 @@ describe("CuponsService", () => {
       order: vi.fn().mockReturnThis(),
       limit: vi.fn().mockResolvedValue({ data: [] }),
     };
-    vi.mocked(supabase.from).mockReturnValue(mockChain as any);
+    vi.mocked(supabase.from).mockReturnValue(mockChain as ReturnType<typeof supabase.from>);
 
     await CuponsService.findHighestByPrefix("TEST#");
 

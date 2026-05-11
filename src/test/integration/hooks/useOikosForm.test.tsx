@@ -1,9 +1,8 @@
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useOikosForm } from "@/components/oikos/useOikosForm";
 import {
   InscricoesService,
-  uploadComprovanteFile,
 } from "@/services/inscricoes.service";
 
 vi.mock("@/hooks/use-toast", () => ({
@@ -12,11 +11,10 @@ vi.mock("@/hooks/use-toast", () => ({
 
 vi.mock("@/hooks/useLotes", () => ({
   useLotes: () => ({
-    lotes: [{ id: 1, is_especial: false, id_payment_link: null }],
+    lotes: [{ id: 1, is_especial: false }],
     loading: false,
   }),
   getLoteDisponivel: () => 1,
-  getLoteDisponivelPaymentLink: () => null,
 }));
 
 vi.mock("@/services/inscricoes.service", () => ({
@@ -64,7 +62,7 @@ const fillRequiredForm = (
   });
 };
 
-describe("useOikosForm - status de pagamento", () => {
+describe("useOikosForm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(InscricoesService.insertInscricao).mockResolvedValue({
@@ -74,52 +72,25 @@ describe("useOikosForm - status de pagamento", () => {
     vi.mocked(InscricoesService.updateComprovante).mockResolvedValue({
       error: null,
     });
-    vi.mocked(uploadComprovanteFile).mockResolvedValue("comprovante.png");
   });
 
-  it("salva pagamento por crédito sempre com status confirmado", async () => {
+  it("salva pagamento por card_manual com status pending", async () => {
     const { result } = renderHook(() => useOikosForm());
     fillRequiredForm(result);
 
     await act(async () => {
-      await result.current.handleCreditPayment();
+      await result.current.handleCardManualPayment();
     });
 
     expect(InscricoesService.insertInscricao).toHaveBeenCalledWith(
       1,
       expect.objectContaining({ nome: "Maria Oliveira" }),
-      "credit",
-      "confirmado",
+      "card_manual",
+      "pending",
       undefined,
       null,
     );
-  });
-
-  it("salva pagamento por PIX sempre com status confirmado", async () => {
-    const { result } = renderHook(() => useOikosForm());
-    fillRequiredForm(result);
-
-    act(() => {
-      result.current.handleFileChange({
-        target: {
-          files: [new File(["pix"], "pix.png", { type: "image/png" })],
-        },
-      } as React.ChangeEvent<HTMLInputElement>);
-    });
-
-    await waitFor(() => expect(result.current.comprovanteFile).not.toBeNull());
-
-    await act(async () => {
-      await result.current.handlePixPayment();
-    });
-
-    expect(InscricoesService.insertInscricao).toHaveBeenCalledWith(
-      1,
-      expect.objectContaining({ nome: "Maria Oliveira" }),
-      "pix",
-      "confirmado",
-      undefined,
-      null,
-    );
+    expect(result.current.currentStep).toBe("confirmation");
+    expect(result.current.paymentMethodUsed).toBe("card_manual");
   });
 });

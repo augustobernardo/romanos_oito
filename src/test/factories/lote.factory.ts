@@ -13,7 +13,6 @@ export const createLote = (overrides: LoteOverrides = {}): Tables<"lotes"> => ({
   status: "disponivel",
   created_at: new Date().toISOString(),
   is_especial: false,
-  id_payment_link: null,
   ...overrides,
 });
 

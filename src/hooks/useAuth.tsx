@@ -19,10 +19,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const checkAdmin = async (userId: string) => {
-    setIsAdmin(await AuthService.checkAdmin(userId));
-  };
-
   useEffect(() => {
     const { data: { subscription } } = AuthService.onAuthStateChange(
       async (event, session) => {
@@ -36,10 +32,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
 
         if (session?.user) {
-          setTimeout(async () => {
-            await checkAdmin(session.user.id);
-            setLoading(false);
-          }, 0);
+          setIsAdmin(AuthService.checkAdmin(session.user));
+          setLoading(false);
         } else {
           setIsAdmin(false);
           setLoading(false);
@@ -47,14 +41,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     );
 
-    AuthService.getSession().then(({ data: { session } }) => {
+    AuthService.getSession().then(({ session }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      if (session?.user) {
-        checkAdmin(session.user.id).then(() => setLoading(false));
-      } else {
-        setLoading(false);
-      }
+      setIsAdmin(AuthService.checkAdmin(session?.user ?? null));
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
