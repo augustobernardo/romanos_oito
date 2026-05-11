@@ -82,7 +82,7 @@ const fillStep1PersonalInfo = async (
     );
   }
   await user.type(q.getByLabelText(/Paróquia/i), "Paróquia São José");
-  await user.type(q.getByLabelText(/Participa de movimento/i), "Não");
+  await user.type(q.getByLabelText(/Participa de algum movimento/i), "Não");
   await user.click(q.getByLabelText(/Sim! Já participei/i));
 };
 
