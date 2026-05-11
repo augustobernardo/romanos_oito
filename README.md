@@ -102,7 +102,6 @@ Antes de começar, certifique-se de ter instalado:
 
 Você também vai precisar de contas ativas em:
 - [Supabase](https://supabase.com) — para banco de dados e autenticação
-- [Stripe](https://stripe.com) — para processamento de pagamentos
 
 ---
 
@@ -140,9 +139,6 @@ Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis:
 # Supabase
 VITE_SUPABASE_URL=https://xxxxxxxxxxx.supabase.co
 VITE_SUPABASE_ANON_KEY=sua_supabase_anon_key
-
-# Stripe
-VITE_STRIPE_PUBLIC_KEY=pk_live_xxxxxxxxxxxxxxxx
 ```
 
 > ⚠️ **Atenção:** nunca commite o arquivo `.env` com dados reais. Ele já está incluído no `.gitignore`. Para produção, use variáveis de ambiente configuradas diretamente no servidor ou na plataforma de deploy.
