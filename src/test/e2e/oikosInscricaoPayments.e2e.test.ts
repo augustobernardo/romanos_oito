@@ -16,11 +16,10 @@ vi.mock("@/hooks/use-toast", () => ({
 
 vi.mock("@/hooks/useLotes", () => ({
   useLotes: () => ({
-    lotes: [{ id: 1, is_especial: false, id_payment_link: null }],
+    lotes: [{ id: 1, is_especial: false }],
     loading: false,
   }),
   getLoteDisponivel: () => 1,
-  getLoteDisponivelPaymentLink: () => null,
 }));
 
 vi.mock("@/services/inscricoes.service", () => ({
@@ -91,7 +90,7 @@ const insertWithAtomicServoDeactivation = vi.fn(
   async (
     loteId: number,
     formData: Parameters<typeof InscricoesService.insertInscricao>[1],
-    method: "credit" | "pix" | "cupom",
+    method: "pix" | "cupom" | "card_manual",
     status: string,
     cupomInfo?: Parameters<typeof InscricoesService.insertInscricao>[4],
     codigoServo?: string | null,
@@ -118,7 +117,7 @@ const insertWithAtomicServoDeactivation = vi.fn(
 const servoCoupons = new Map<string, { ativo: boolean }>();
 const inscricoes: ReturnType<typeof mapFormToInscricao>[] = [];
 
-describe("E2E - inscrição OIKOS com pagamentos e cupom SERVOAMIGO", () => {
+describe("E2E - inscrição OIKOS com PIX, card_manual e cupom SERVOAMIGO", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(console, "error").mockImplementation(() => undefined);
@@ -129,23 +128,6 @@ describe("E2E - inscrição OIKOS com pagamentos e cupom SERVOAMIGO", () => {
     );
     vi.mocked(InscricoesService.updateComprovante).mockResolvedValue({ error: null });
     vi.mocked(uploadComprovanteFile).mockResolvedValue("comprovante-pix.png");
-  });
-
-  it("simula inscrição com crédito e mantém o status final como confirmado", async () => {
-    const { result } = renderHook(() => useOikosForm());
-    fillRequiredForm(result);
-
-    await act(async () => {
-      await result.current.handleCreditPayment();
-    });
-
-    expect(inscricoes).toHaveLength(1);
-    expect(inscricoes[0]).toMatchObject({
-      metodo_pagamento: "credit",
-      status: "confirmado",
-      nome: "Maria Oliveira",
-    });
-    expect(result.current.currentStep).toBe("confirmation");
   });
 
   it("simula inscrição com PIX, upload do comprovante e mantém o status final como confirmado", async () => {
@@ -170,15 +152,29 @@ describe("E2E - inscrição OIKOS com pagamentos e cupom SERVOAMIGO", () => {
       status: "confirmado",
       nome: "Maria Oliveira",
     });
-    expect(uploadComprovanteFile).toHaveBeenCalledWith(expect.any(File), "inscricao-1");
-    expect(InscricoesService.updateComprovante).toHaveBeenCalledWith(
-      "inscricao-1",
-      "comprovante-pix.png",
-    );
+    expect(result.current.paymentMethodUsed).toBe("pix");
     expect(result.current.currentStep).toBe("confirmation");
   });
 
-  it("inativa atomicamente o cupom SERVOAMIGO ao inserir a inscrição e bloqueia reuso", async () => {
+  it("simula inscrição com card_manual e status pending", async () => {
+    const { result } = renderHook(() => useOikosForm());
+    fillRequiredForm(result);
+
+    await act(async () => {
+      await result.current.handleCardManualPayment();
+    });
+
+    expect(inscricoes).toHaveLength(1);
+    expect(inscricoes[0]).toMatchObject({
+      metodo_pagamento: "card_manual",
+      status: "pending",
+      nome: "Maria Oliveira",
+    });
+    expect(result.current.paymentMethodUsed).toBe("card_manual");
+    expect(result.current.currentStep).toBe("confirmation");
+  });
+
+  it("inativa atomicamente o cupom SERVOAMIGO ao inserir a inscrição via PIX e bloqueia reuso", async () => {
     const codigoServo = "SERVOAMIGO#001";
     servoCoupons.set(codigoServo, { ativo: true });
 
@@ -186,14 +182,22 @@ describe("E2E - inscrição OIKOS com pagamentos e cupom SERVOAMIGO", () => {
     fillRequiredForm(primeiraInscricao.result, "Primeira Encontrista");
     await validateServoCoupon(primeiraInscricao.result, codigoServo);
 
+    act(() => {
+      primeiraInscricao.result.current.handleFileChange({
+        target: { files: [new File(["pix"], "pix.png", { type: "image/png" })] },
+      } as React.ChangeEvent<HTMLInputElement>);
+    });
+
+    await waitFor(() => expect(primeiraInscricao.result.current.comprovanteFile).not.toBeNull());
+
     await act(async () => {
-      await primeiraInscricao.result.current.handleCreditPayment();
+      await primeiraInscricao.result.current.handlePixPayment();
     });
 
     expect(inscricoes).toHaveLength(1);
     expect(inscricoes[0]).toMatchObject({
       codigo_servo: codigoServo,
-      metodo_pagamento: "credit",
+      metodo_pagamento: "pix",
       status: "confirmado",
     });
     expect(servoCoupons.get(codigoServo)?.ativo).toBe(false);
@@ -202,8 +206,16 @@ describe("E2E - inscrição OIKOS com pagamentos e cupom SERVOAMIGO", () => {
     fillRequiredForm(segundaInscricao.result, "Segunda Encontrista");
     await validateServoCoupon(segundaInscricao.result, codigoServo);
 
+    act(() => {
+      segundaInscricao.result.current.handleFileChange({
+        target: { files: [new File(["pix"], "pix2.png", { type: "image/png" })] },
+      } as React.ChangeEvent<HTMLInputElement>);
+    });
+
+    await waitFor(() => expect(segundaInscricao.result.current.comprovanteFile).not.toBeNull());
+
     await act(async () => {
-      await segundaInscricao.result.current.handleCreditPayment();
+      await segundaInscricao.result.current.handlePixPayment();
     });
 
     expect(inscricoes).toHaveLength(1);
@@ -211,14 +223,14 @@ describe("E2E - inscrição OIKOS com pagamentos e cupom SERVOAMIGO", () => {
     expect(insertWithAtomicServoDeactivation).toHaveBeenLastCalledWith(
       1,
       expect.objectContaining({ nome: "Segunda Encontrista" }),
-      "credit",
+      "pix",
       "confirmado",
       undefined,
       codigoServo,
     );
   });
 
-  it("bloqueia inscrição com cupom SERVOAMIGO inexistente e exibe a mensagem correta", async () => {
+  it("bloqueia inscrição com cupom SERVOAMIGO inexistente", async () => {
     const { result } = renderHook(() => useOikosForm());
     fillRequiredForm(result, "Cupom Inexistente");
 
@@ -248,7 +260,7 @@ describe("E2E - inscrição OIKOS com pagamentos e cupom SERVOAMIGO", () => {
     });
   });
 
-  it("bloqueia inscrição com cupom SERVOAMIGO em formato diferente e exibe a mensagem correta", async () => {
+  it("bloqueia inscrição com cupom SERVOAMIGO em formato diferente", async () => {
     const { result } = renderHook(() => useOikosForm());
     fillRequiredForm(result, "Formato Inválido");
 

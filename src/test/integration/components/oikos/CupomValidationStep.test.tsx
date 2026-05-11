@@ -5,10 +5,11 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { CupomValidationStep } from "@/components/oikos/CupomValidationStep";
+import { ComponentProps } from "react";
 
 vi.mock("framer-motion", () => ({
   motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+    div: ({ ...props }: ComponentProps<"div">) => <div {...props} />,
   },
 }));
 

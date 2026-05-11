@@ -1,5 +1,6 @@
 import type { TablesInsert } from "@/integrations/supabase/types";
 import { OIKOS_EVENT_ID } from "./constants";
+import { calculateAge } from "@/utils/dateUtils";
 
 type FormValues = {
   nome: string;
@@ -28,21 +29,10 @@ type FormValues = {
   expectativaOikos: string;
 };
 
-export const calculateAge = (birthday: string): number => {
-  const today = new Date();
-  const birthDate = new Date(birthday);
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const month = today.getMonth() - birthDate.getMonth();
-  if (month < 0 || (month === 0 && today.getDate() < birthDate.getDate())) {
-    age--;
-  }
-  return age;
-};
-
 export const mapFormToInscricao = (
   loteId: number,
   formData: FormValues,
-  method: "credit" | "pix" | "cupom",
+  method: "pix" | "cupom" | "card_manual",
   status: string,
   cupomInfo?: { nomeTitular: string | null; comprovanteUrl: string | null },
   codigoServo?: string | null,
@@ -79,7 +69,5 @@ export const mapFormToInscricao = (
   lote_especial: method === "cupom",
   titular_especial: cupomInfo?.nomeTitular || null,
   comprovante_url: cupomInfo?.comprovanteUrl || null,
-  // codigo_servo was added by the SERVOAMIGO migration. The generated types
-  // may not yet include it; cast keeps build clean while remaining type-safe at runtime.
   ...(codigoServo ? ({ codigo_servo: codigoServo } as Record<string, string>) : {}),
 });

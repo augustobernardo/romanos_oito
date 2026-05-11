@@ -6,19 +6,13 @@ import { formSchema, type FormData } from "@/components/form/schema";
 import {
   useLotes,
   getLoteDisponivel,
-  getLoteDisponivelPaymentLink,
 } from "@/hooks/useLotes";
 import {
   InscricoesService,
   uploadComprovanteFile,
 } from "@/services/inscricoes.service";
-import {
-  STRIPE_PAYMENT_LINK_BASE_URL,
-  STRIPE_SERVO_AMIGO_PAYMENT_LINK,
-} from "@/utils/stripe";
 import { CuponsServoService } from "@/services/cuponsServo.service";
 
-type PaymentMethod = "credit" | "pix" | "cupom" | null;
 type PaymentStep =
   | "form"
   | "cupom_validation"
@@ -26,10 +20,11 @@ type PaymentStep =
   | "payment"
   | "confirmation";
 
+type PaymentMethodUsed = "pix" | "cupom" | "card_manual" | null;
+
 export const useOikosForm = () => {
   const [currentStep, setCurrentStep] = useState<PaymentStep>("form");
   const [loteSelecionado, setLoteSelecionado] = useState<number | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(null);
   const [inscricaoId, setInscricaoId] = useState<number | null>(null);
   const [comprovanteFile, setComprovanteFile] = useState<File | null>(null);
   const [comprovantePreview, setComprovantePreview] = useState<string | null>(
@@ -45,6 +40,7 @@ export const useOikosForm = () => {
   const [cupomServoCode, setCupomServoCode] = useState("");
   const [cupomServoValidating, setCupomServoValidating] = useState(false);
   const [cupomServoCodigo, setCupomServoCodigo] = useState<string | null>(null);
+  const [paymentMethodUsed, setPaymentMethodUsed] = useState<PaymentMethodUsed>(null);
 
   const { toast } = useToast();
   const { lotes, loading: lotesLoading } = useLotes();
@@ -87,33 +83,12 @@ export const useOikosForm = () => {
     return lote?.is_especial ?? false;
   };
 
-  const goToPaymentLink = () => {
-    if (cupomServoCodigo) {
-      window.location.href = STRIPE_SERVO_AMIGO_PAYMENT_LINK;
-      return;
-    }
-
-    const selectedLotePaymentId = getLoteDisponivelPaymentLink(
-      lotes,
-      loteSelecionado!,
-    );
-    if (selectedLotePaymentId) {
-      const paymentLink = `${STRIPE_PAYMENT_LINK_BASE_URL}${selectedLotePaymentId}`;
-      const url = new URL(paymentLink);
-      window.location.href = url.toString();
-    }
-  };
-
   const handleFormSubmit = async (data: FormData) => {
     if (isLoteEspecialSelected()) {
       setCurrentStep("cupom_validation");
     } else {
       setCurrentStep("cupom_servo");
     }
-  };
-
-  const handlePaymentMethodSelect = (method: PaymentMethod) => {
-    setPaymentMethod(method);
   };
 
   const getInscricaoErrorMessage = (error: unknown) => {
@@ -123,39 +98,6 @@ export const useOikosForm = () => {
     }
 
     return "Tente novamente mais tarde.";
-  };
-
-  const handleCreditPayment = async () => {
-    if (!loteSelecionado) {
-      toast({
-        title: "Erro ao processar pagamento",
-        description: "Selecione um método de pagamento primeiro.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const { error } = await InscricoesService.insertInscricao(
-        loteSelecionado,
-        form.getValues(),
-        "credit",
-        "confirmado",
-        undefined,
-        cupomServoCodigo,
-      );
-      if (error) throw error;
-
-      goToPaymentLink();
-      setCurrentStep("confirmation");
-    } catch (error) {
-      console.error("Erro ao salvar inscrição:", error);
-      toast({
-        title: "Erro ao processar inscrição",
-        description: getInscricaoErrorMessage(error),
-        variant: "destructive",
-      });
-    }
   };
 
   const handleCupomValidation = async () => {
@@ -221,6 +163,7 @@ export const useOikosForm = () => {
         cupomInfo || undefined,
       );
       if (error) throw error;
+      setPaymentMethodUsed("cupom");
       setCurrentStep("confirmation");
     } catch (error) {
       console.error("Erro ao salvar inscrição:", error);
@@ -257,20 +200,17 @@ export const useOikosForm = () => {
       if (error) throw error;
 
       setInscricaoId(inscricaoData.id);
-      // Upload do arquivo retorna apenas o nome (sem URL completa nem metadata).
       const fileName = await uploadComprovanteFile(
         comprovanteFile,
         inscricaoData.id,
       );
-      // Lote especial herda comprovante_url do cupom (compartilhado entre titulares
-      // do mesmo cupom) e NÃO deve ser sobrescrito. Lote normal precisa persistir
-      // o nome do próprio arquivo enviado, isolado por inscrição.
       if (!isLoteEspecialSelected()) {
         const { error: updateError } =
           await InscricoesService.updateComprovante(inscricaoData.id, fileName);
         if (updateError) throw updateError;
       }
 
+      setPaymentMethodUsed("pix");
       setCurrentStep("confirmation");
     } catch (error) {
       console.error("Erro ao processar pagamento PIX:", error);
@@ -284,12 +224,30 @@ export const useOikosForm = () => {
     }
   };
 
-  const handleCopyPixKey = (key: string) => {
-    navigator.clipboard.writeText(key);
-    toast({
-      title: "Chave copiada!",
-      description: "A chave PIX foi copiada para a área de transferência.",
-    });
+  const handleCardManualPayment = async () => {
+    if (!loteSelecionado) return;
+
+    try {
+      const { error } = await InscricoesService.insertInscricao(
+        loteSelecionado,
+        form.getValues(),
+        "card_manual",
+        "pending",
+        undefined,
+        cupomServoCodigo,
+      );
+      if (error) throw error;
+
+      setPaymentMethodUsed("card_manual");
+      setCurrentStep("confirmation");
+    } catch (error) {
+      console.error("Erro ao processar inscrição:", error);
+      toast({
+        title: "Erro ao processar inscrição",
+        description: getInscricaoErrorMessage(error),
+        variant: "destructive",
+      });
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -329,13 +287,13 @@ export const useOikosForm = () => {
 
   const handleBackToForm = () => {
     setCurrentStep("form");
-    setPaymentMethod(null);
     setComprovanteFile(null);
     setComprovantePreview(null);
     setCupomCode("");
     setCupomInfo(null);
     setCupomServoCode("");
     setCupomServoCodigo(null);
+    setPaymentMethodUsed(null);
   };
 
   const handleBackFromPaymentToForm = () => {
@@ -343,7 +301,6 @@ export const useOikosForm = () => {
       setCurrentStep("cupom_validation");
     } else {
       setCurrentStep("cupom_servo");
-      setPaymentMethod(null);
       setComprovanteFile(null);
       setComprovantePreview(null);
     }
@@ -409,7 +366,6 @@ export const useOikosForm = () => {
     setCurrentStep,
     loteSelecionado,
     setLoteSelecionado,
-    paymentMethod,
     inscricaoId,
     comprovanteFile,
     comprovantePreview,
@@ -422,18 +378,17 @@ export const useOikosForm = () => {
     setCupomServoCode,
     cupomServoValidating,
     cupomServoCodigo,
+    paymentMethodUsed,
     form,
     lotes,
     lotesLoading,
     loteDisponivelId,
     isLoteEspecialSelected,
     handleFormSubmit,
-    handlePaymentMethodSelect,
-    handleCreditPayment,
     handleCupomValidation,
     handleCupomPayment,
     handlePixPayment,
-    handleCopyPixKey,
+    handleCardManualPayment,
     handleFileChange,
     clearComprovante,
     handleBackToForm,
