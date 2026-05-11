@@ -1,7 +1,17 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Copy, Check, Upload, FileText, AlertTriangle, QrCode, Image, Trash2 } from "lucide-react";
-import { PIX_KEY, PIX_RECEIVER_NAME } from "@/utils/pix";
+import {
+  Copy,
+  Check,
+  Upload,
+  FileText,
+  AlertTriangle,
+  QrCode,
+  Image,
+  Trash2,
+} from "lucide-react";
+import { PIX_KEY_PENTECOSTES, PIX_RECEIVER_PENTECOSTES_NAME } from "@/utils/pix";
+import qrCodePentecostes from "@/assets/pentecoste/QR_CODE_PIX_PENTECOSTES.jpg";
 
 const ALLOWED_TYPES = ["image/png", "image/jpeg", "application/pdf"];
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -44,7 +54,7 @@ const Step3Payment = ({
 
   const handleCopyPixKey = useCallback(async () => {
     try {
-      await navigator.clipboard.writeText(PIX_KEY);
+      await navigator.clipboard.writeText(PIX_KEY_PENTECOSTES);
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     } catch {
@@ -140,7 +150,8 @@ const Step3Payment = ({
           Pagamento da inscrição
         </h2>
         <p className="mt-2 font-mono text-xs uppercase tracking-wider text-pentecoste-navy/70">
-          Para concluir sua inscrição, realize o pagamento via PIX e anexe o comprovante abaixo.
+          Para concluir sua inscrição, realize o pagamento via PIX e anexe o
+          comprovante abaixo.
         </p>
       </div>
 
@@ -148,17 +159,13 @@ const Step3Payment = ({
         <p className="font-mono text-xs uppercase tracking-[0.15em] text-pentecoste-navy/70">
           QR Code
         </p>
-        <div className="flex items-center justify-center border-2 border-dashed border-pentecoste-navy/30 bg-pentecoste-paper p-8">
-          <div className="flex flex-col items-center gap-3 text-pentecoste-navy/40">
-            <QrCode className="h-16 w-16" />
-            <span className="font-mono text-xs uppercase tracking-[0.2em]">
-              QR Code Placeholder
-            </span>
-          </div>
+        <div className="flex items-center justify-center bg-pentecoste-paper p-0">
+          <img
+            src={qrCodePentecostes}
+            alt="QR Code PIX Pentecostes"
+            className="w-full max-w-[300px] aspect-square object-contain"
+          />
         </div>
-        <p className="font-mono text-[0.6rem] uppercase tracking-wider text-pentecoste-navy/40">
-          {/* TODO: inserir QR Code oficial futuramente */}
-        </p>
       </div>
 
       <div className="space-y-1">
@@ -195,14 +202,15 @@ const Step3Payment = ({
         </p>
         <div className="border-2 border-pentecoste-navy bg-pentecoste-paper p-4">
           <span className="font-mono text-sm uppercase tracking-[0.1em] text-pentecoste-navy">
-            {PIX_RECEIVER_NAME}
+            {PIX_RECEIVER_PENTECOSTES_NAME}
           </span>
         </div>
       </div>
 
       <div className="space-y-1">
         <p className="font-mono text-xs uppercase tracking-[0.15em] text-pentecoste-navy/70">
-          Comprovante de pagamento <span className="text-pentecoste-red">*</span>
+          Comprovante de pagamento{" "}
+          <span className="text-pentecoste-red">*</span>
         </p>
 
         {paymentProofFile ? (
@@ -223,7 +231,9 @@ const Step3Payment = ({
               <div className="flex items-center justify-center border-2 border-dashed border-pentecoste-navy/30 bg-pentecoste-paper p-8">
                 <div className="flex flex-col items-center gap-2 text-pentecoste-navy/50">
                   <FileText className="h-10 w-10" />
-                  <span className="font-mono text-xs uppercase tracking-[0.2em]">PDF</span>
+                  <span className="font-mono text-xs uppercase tracking-[0.2em]">
+                    PDF
+                  </span>
                 </div>
               </div>
             )}
