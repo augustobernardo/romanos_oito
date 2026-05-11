@@ -119,7 +119,9 @@ const Step1DadosPessoais = ({ form }: Props) => {
                 <FormControl>
                   <Checkbox
                     checked={field.value === true}
-                    onCheckedChange={(checked) => field.onChange(checked === true)}
+                    onCheckedChange={(checked) =>
+                      field.onChange(checked === true)
+                    }
                     aria-required
                     id="confirm_authorization_underage"
                   />
@@ -176,7 +178,10 @@ const Step1DadosPessoais = ({ form }: Props) => {
         name="participaMovimento"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="font-bold">Participa de movimento *</FormLabel>
+            <FormLabel className="font-bold">
+              Participa de algum movimento? (EAC, GO, Comunidade). Se sim, qual?
+              *
+            </FormLabel>
             <FormControl>
               <Input
                 placeholder="Caso não participe, colocar 'Não'"

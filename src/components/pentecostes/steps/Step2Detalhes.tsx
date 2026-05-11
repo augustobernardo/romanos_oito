@@ -42,7 +42,9 @@ const Step2Detalhes = ({ form }: Props) => {
         name="bringShare"
         render={() => (
           <FormItem>
-            <FormLabel className="font-bold">O que você vai trazer? *</FormLabel>
+            <FormLabel className="font-bold">
+              Teremos café da manhã partilhado. O que você vai trazer? *
+            </FormLabel>
             <p
               className="leading-relaxed text-pentecoste-navy/80"
               style={monoStyle}
@@ -95,7 +97,9 @@ const Step2Detalhes = ({ form }: Props) => {
           name="bringShareOther"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="font-bold">Descreva o que você irá levar *</FormLabel>
+              <FormLabel className="font-bold">
+                Descreva o que você irá levar *
+              </FormLabel>
               <FormControl>
                 <Input
                   placeholder="Ex: Frutas variadas"
@@ -170,7 +174,7 @@ const Step2Detalhes = ({ form }: Props) => {
                   style={monoStyle}
                 >
                   Comprometo-me chegar às 21h30 para realizar o meu check-in.
-                  Caso escolha outro horário, desmarque esta opção.
+                  Caso precise chegar em outro horário, desmarque esta opção.
                 </p>
               </div>
             </div>
