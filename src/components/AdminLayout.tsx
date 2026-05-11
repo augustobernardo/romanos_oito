@@ -66,6 +66,7 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
     localStorage.getItem("sidebar-collapsed") === "true",
   );
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const [autoExpanded, setAutoExpanded] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
   const isGroupActive = useCallback(
@@ -96,7 +97,13 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
     setOpenGroups((prev) => {
       const wasOpen = prev[label];
       const next: Record<string, boolean> = {};
-      if (!wasOpen) next[label] = true;
+      if (!wasOpen) {
+        next[label] = true;
+        if (collapsed) {
+          setCollapsed(false);
+          setAutoExpanded(true);
+        }
+      }
       return next;
     });
   };
@@ -111,6 +118,8 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
   const toggleCollapsed = () => {
     const next = !collapsed;
     setCollapsed(next);
+    setOpenGroups({});
+    setAutoExpanded(false);
     localStorage.setItem("sidebar-collapsed", String(next));
   };
 
@@ -274,49 +283,31 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
                     </>
                   )}
                 </button>
-                {isOpen && (
-                  <>
-                    {collapsed ? (
-                      <div className="fixed left-16 z-50 ml-1 -mt-6 rounded-lg border bg-card shadow-lg p-1.5 space-y-0.5 min-w-[180px]">
-                        <p className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                          {group.label}
-                        </p>
-                        {group.items.map((item) => (
-                          <Link
-                            key={item.href}
-                            to={item.href}
-                            className={cn(
-                              "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
-                              location.pathname === item.href
-                                ? "bg-primary text-primary-foreground font-medium"
-                                : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                            )}
-                          >
-                            <item.icon className="h-4 w-4 shrink-0" />
-                            <span>{item.label}</span>
-                          </Link>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="ml-4 space-y-1 mt-1">
-                        {group.items.map((item) => (
-                          <Link
-                            key={item.href}
-                            to={item.href}
-                            className={cn(
-                              "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
-                              location.pathname === item.href
-                                ? "bg-primary text-primary-foreground font-medium"
-                                : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                            )}
-                          >
-                            <item.icon className="h-3.5 w-3.5 shrink-0" />
-                            <span>{item.label}</span>
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-                  </>
+                {isOpen && !collapsed && (
+                  <div className="ml-4 space-y-1 mt-1">
+                    {group.items.map((item) => (
+                      <Link
+                        key={item.href}
+                        to={item.href}
+                        onClick={() => {
+                          if (autoExpanded) {
+                            setCollapsed(true);
+                            setAutoExpanded(false);
+                            localStorage.setItem("sidebar-collapsed", "true");
+                          }
+                        }}
+                        className={cn(
+                          "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                          location.pathname === item.href
+                            ? "bg-primary text-primary-foreground font-medium"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                        )}
+                      >
+                        <item.icon className="h-3.5 w-3.5 shrink-0" />
+                        <span>{item.label}</span>
+                      </Link>
+                    ))}
+                  </div>
                 )}
               </div>
             );
