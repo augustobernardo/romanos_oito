@@ -4,5 +4,6 @@ dist
 
 *.zip
 
-CALUDE.md
-.claude/
+opencode.json
+AGENTS.md
+.agents
