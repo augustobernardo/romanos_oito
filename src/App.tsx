@@ -8,6 +8,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Home from "./pages/Home";
 import OikosLanding from "./pages/OikosLanding";
+import Pentecostes from "./pages/Pentecostes";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./components/admin/AdminDashboard";
 import AdminEventos from "./components/admin/AdminEventos";
@@ -15,6 +16,7 @@ import AdminLotes from "./components/admin/AdminLotes";
 import AdminInscricoes from "./components/admin/AdminInscricoes";
 import AdminCupons from "./components/admin/AdminCupons";
 import AdminCuponsServo from "./components/admin/AdminCuponsServo";
+import PentecosteAdmin from "./components/admin/pentecostes/PentecosteAdmin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -37,6 +39,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/oikos" element={<OikosLanding />} />
+              <Route path="/pentecostes" element={<Pentecostes />} />
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route
                 path="/admin"
@@ -83,6 +86,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <AdminCuponsServo />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/pentecostes"
+                element={
+                  <ProtectedRoute>
+                    <PentecosteAdmin />
                   </ProtectedRoute>
                 }
               />
