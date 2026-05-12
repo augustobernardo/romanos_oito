@@ -1,5 +1,5 @@
 /**
- * Tests for ConfirmationScreen component (PIX + card_manual variants).
+ * Tests for ConfirmationScreen component (PIX variant).
  */
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
@@ -15,7 +15,7 @@ vi.mock("framer-motion", () => ({
 }));
 
 describe("ConfirmationScreen", () => {
-  it("exibe mensagem de comprovante enviado (variante pix padrão)", () => {
+  it("exibe mensagem de comprovante enviado", () => {
     render(<ConfirmationScreen />);
     expect(screen.getByText("Comprovante enviado!")).toBeInTheDocument();
     expect(
@@ -23,20 +23,7 @@ describe("ConfirmationScreen", () => {
     ).toBeInTheDocument();
   });
 
-  it("exibe mensagem de inscrição realizada para card_manual", () => {
-    render(<ConfirmationScreen variant="card_manual" />);
-    expect(screen.getByText("Inscrição realizada com sucesso!")).toBeInTheDocument();
-    expect(
-      screen.getByText(/Seu pagamento ficou pendente/),
-    ).toBeInTheDocument();
-  });
-
-  it("exibe WhatsApp CTA para card_manual", () => {
-    render(<ConfirmationScreen variant="card_manual" />);
-    expect(screen.getByText("Falar com SAC no WhatsApp")).toBeInTheDocument();
-  });
-
-  it("exibe instrução final com contato SAC (variante pix)", () => {
+  it("exibe instrução final com contato SAC", () => {
     render(<ConfirmationScreen />);
     expect(
       screen.getByText(/Seja bem-vindo ao melhor fim de semana da sua vida/),

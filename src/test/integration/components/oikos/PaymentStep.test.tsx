@@ -1,5 +1,5 @@
 /**
- * Tests for PaymentStep component (PIX + Cartão cards with card_manual flow).
+ * Tests for PaymentStep component (PIX only).
  */
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
@@ -31,9 +31,7 @@ describe("PaymentStep", () => {
     comprovantePreview: null,
     comprovanteFile: null,
     uploading: false,
-    cupomInfo: null,
     onPixPayment: vi.fn(),
-    onCardManualPayment: vi.fn(),
     onFileChange: vi.fn(),
     onClearComprovante: vi.fn(),
     onBack: vi.fn(),
@@ -68,14 +66,6 @@ describe("PaymentStep", () => {
     expect(screen.queryByAltText("QR Code PIX")).toBeNull();
   });
 
-  it("exibe grid com dois cards: PIX e Cartão", () => {
-    const { container } = render(<PaymentStep {...defaultProps} />);
-    const grid = container.querySelector(".grid");
-    expect(grid).not.toBeNull();
-    expect(screen.getByText("PIX")).toBeInTheDocument();
-    expect(screen.getByText("Cartão")).toBeInTheDocument();
-  });
-
   it("exibe botão de copiar chave PIX sem mostrar a chave no DOM", () => {
     render(<PaymentStep {...defaultProps} lotePreco="R$125,00" />);
     expect(screen.getByRole("button", { name: /copiar chave pix/i })).toBeInTheDocument();
@@ -87,23 +77,7 @@ describe("PaymentStep", () => {
     expect(screen.getByText("Test Receiver")).toBeInTheDocument();
   });
 
-  it("ao selecionar Cartão, exibe info SAC e botão de continuar", () => {
-    render(<PaymentStep {...defaultProps} lotePreco="R$125,00" />);
-    fireEvent.click(screen.getByText("Cartão"));
-    expect(screen.getByText(/Após finalizar sua inscrição/i)).toBeInTheDocument();
-    expect(screen.getByText("Falar com SAC no WhatsApp")).toBeInTheDocument();
-    expect(screen.getByText(/Continuar com pagamento em cartão/i)).toBeInTheDocument();
-  });
-
-  it("chama onCardManualPayment ao clicar em Continuar", () => {
-    const onCardManualPayment = vi.fn();
-    render(<PaymentStep {...defaultProps} onCardManualPayment={onCardManualPayment} lotePreco="R$125,00" />);
-    fireEvent.click(screen.getByText("Cartão"));
-    fireEvent.click(screen.getByText(/Continuar com pagamento em cartão/i));
-    expect(onCardManualPayment).toHaveBeenCalled();
-  });
-
-  it("exibe botão de upload quando não há comprovante (PIX selecionado)", () => {
+  it("exibe botão de upload quando não há comprovante", () => {
     render(<PaymentStep {...defaultProps} lotePreco="R$125,00" />);
     expect(screen.getByText(/Clique para selecionar o comprovante/)).toBeInTheDocument();
   });
@@ -140,9 +114,9 @@ describe("PaymentStep", () => {
     expect(onBack).toHaveBeenCalled();
   });
 
-  it("mostra cabeçalho para escolha de pagamento", () => {
+  it("mostra cabeçalho para pagamento via PIX", () => {
     render(<PaymentStep {...defaultProps} lotePreco="R$125,00" />);
-    expect(screen.getByText(/escolha a forma de pagamento/i)).toBeInTheDocument();
+    expect(screen.getByText(/pagamento via PIX/i)).toBeInTheDocument();
   });
 
   it("chama onPixPayment ao clicar em Finalizar pagamento", () => {
@@ -159,20 +133,5 @@ describe("PaymentStep", () => {
     const buttons = screen.getAllByRole("button", { name: /finalizar pagamento/i });
     fireEvent.click(buttons[buttons.length - 1]);
     expect(onPixPayment).toHaveBeenCalled();
-  });
-
-  it("ao selecionar Cartão, esconde a seção PIX", () => {
-    render(<PaymentStep {...defaultProps} lotePreco="R$125,00" />);
-    expect(screen.getByAltText("QR Code PIX")).toBeInTheDocument();
-    fireEvent.click(screen.getByText("Cartão"));
-    expect(screen.queryByAltText("QR Code PIX")).toBeNull();
-  });
-
-  it("ao voltar para PIX, exibe o QR code novamente", () => {
-    render(<PaymentStep {...defaultProps} lotePreco="R$125,00" />);
-    fireEvent.click(screen.getByText("Cartão"));
-    expect(screen.queryByAltText("QR Code PIX")).toBeNull();
-    fireEvent.click(screen.getByText("PIX"));
-    expect(screen.getByAltText("QR Code PIX")).toBeInTheDocument();
   });
 });

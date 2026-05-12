@@ -10,6 +10,8 @@ import EmergenciaSection from "@/components/form/EmergenciaSection";
 import CamisaSection from "@/components/form/CamisaSection";
 import ExpectativaSection from "@/components/form/ExpectativaSection";
 import { useOikosForm } from "./useOikosForm";
+import { getMaxBirthDateForLote } from "@/utils/validateParticipantAge";
+import { getMinBirthDateForLote } from "@/utils/validateParticipantAge";
 import { ConfirmationScreen } from "./ConfirmationScreen";
 import { CupomValidationStep } from "./CupomValidationStep";
 import { CupomServoStep } from "./CupomServoStep";
@@ -26,11 +28,9 @@ const OikosFormSection = () => {
     cupomCode,
     setCupomCode,
     cupomValidating,
-    cupomInfo,
     cupomServoCode,
     setCupomServoCode,
     cupomServoValidating,
-    paymentMethodUsed,
     form,
     lotes,
     lotesLoading,
@@ -40,7 +40,6 @@ const OikosFormSection = () => {
     handleCupomValidation,
     handleCupomPayment,
     handlePixPayment,
-    handleCardManualPayment,
     handleFileChange,
     clearComprovante,
     handleBackToForm,
@@ -50,7 +49,7 @@ const OikosFormSection = () => {
   } = useOikosForm();
 
   if (currentStep === "confirmation") {
-    return <ConfirmationScreen variant={paymentMethodUsed === "card_manual" ? "card_manual" : "pix"} />;
+    return <ConfirmationScreen />;
   }
 
   if (currentStep === "cupom_validation") {
@@ -89,9 +88,7 @@ const OikosFormSection = () => {
         comprovantePreview={comprovantePreview}
         comprovanteFile={comprovanteFile}
         uploading={uploading}
-        cupomInfo={cupomInfo}
         onPixPayment={handlePixPayment}
-        onCardManualPayment={handleCardManualPayment}
         onFileChange={handleFileChange}
         onClearComprovante={clearComprovante}
         onBack={handleBackFromPaymentToForm}
@@ -187,7 +184,7 @@ const OikosFormSection = () => {
                 className="space-y-6"
                 onSubmit={form.handleSubmit(handleFormSubmit)}
               >
-                <DadosPessoaisSection form={form} />
+                <DadosPessoaisSection form={form} maxDate={getMaxBirthDateForLote(loteSelecionado) ?? undefined} minDate={getMinBirthDateForLote(loteSelecionado) ?? undefined} />
                 <PaisResponsaveisSection form={form} />
                 <VidaIgrejaSection form={form} />
                 <EmergenciaSection form={form} />

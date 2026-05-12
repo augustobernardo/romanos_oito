@@ -74,23 +74,31 @@ describe("useOikosForm", () => {
     });
   });
 
-  it("salva pagamento por card_manual com status pending", async () => {
+  it("salva pagamento por PIX com status confirmado", async () => {
     const { result } = renderHook(() => useOikosForm());
     fillRequiredForm(result);
 
+    const comprovanteFile = new File(["pix"], "comprovante.png", { type: "image/png" });
+
     await act(async () => {
-      await result.current.handleCardManualPayment();
+      result.current.handleFileChange({
+        target: { files: [comprovanteFile] },
+      } as unknown as React.ChangeEvent<HTMLInputElement>);
+    });
+
+    await act(async () => {
+      await result.current.handlePixPayment();
     });
 
     expect(InscricoesService.insertInscricao).toHaveBeenCalledWith(
       1,
       expect.objectContaining({ nome: "Maria Oliveira" }),
-      "card_manual",
-      "pending",
+      "pix",
+      "confirmado",
       undefined,
       null,
     );
     expect(result.current.currentStep).toBe("confirmation");
-    expect(result.current.paymentMethodUsed).toBe("card_manual");
+    expect(result.current.paymentMethodUsed).toBe("pix");
   });
 });

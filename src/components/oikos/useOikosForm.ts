@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
@@ -12,6 +12,8 @@ import {
   uploadComprovanteFile,
 } from "@/services/inscricoes.service";
 import { CuponsServoService } from "@/services/cuponsServo.service";
+import { validateParticipantAge } from "@/utils/validateParticipantAge";
+import { AGE_RULES } from "@/config/ageRules";
 
 type PaymentStep =
   | "form"
@@ -20,7 +22,7 @@ type PaymentStep =
   | "payment"
   | "confirmation";
 
-type PaymentMethodUsed = "pix" | "cupom" | "card_manual" | null;
+type PaymentMethodUsed = "pix" | "cupom" | null;
 
 export const useOikosForm = () => {
   const [currentStep, setCurrentStep] = useState<PaymentStep>("form");
@@ -83,8 +85,47 @@ export const useOikosForm = () => {
     return lote?.is_especial ?? false;
   };
 
+  useEffect(() => {
+    const dataNascimento = form.getValues("dataNascimento");
+    if (dataNascimento) {
+      const result = validateParticipantAge(dataNascimento, loteSelecionado);
+      if (!result.valid) {
+        form.setError("dataNascimento", { message: result.message });
+      } else {
+        form.clearErrors("dataNascimento");
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loteSelecionado]);
+
+  useEffect(() => {
+    const subscription = form.watch((values, { name }) => {
+      if (name === "dataNascimento") {
+        const result = validateParticipantAge(
+          values.dataNascimento || "",
+          loteSelecionado,
+        );
+        if (!result.valid) {
+          form.setError("dataNascimento", { message: result.message });
+        } else {
+          form.clearErrors("dataNascimento");
+        }
+      }
+    });
+    return () => subscription.unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loteSelecionado, form]);
+
   const handleFormSubmit = async (data: FormData) => {
-    if (isLoteEspecialSelected()) {
+    const result = validateParticipantAge(data.dataNascimento, loteSelecionado);
+    if (!result.valid) {
+      form.setError("dataNascimento", { message: result.message });
+      return;
+    }
+
+    if (loteSelecionado === AGE_RULES.SPECIAL_LOTE_ID) {
+      setCurrentStep("payment");
+    } else if (isLoteEspecialSelected()) {
       setCurrentStep("cupom_validation");
     } else {
       setCurrentStep("cupom_servo");
@@ -161,6 +202,7 @@ export const useOikosForm = () => {
         "cupom",
         "confirmado",
         cupomInfo || undefined,
+        undefined,
       );
       if (error) throw error;
       setPaymentMethodUsed("cupom");
@@ -224,32 +266,6 @@ export const useOikosForm = () => {
     }
   };
 
-  const handleCardManualPayment = async () => {
-    if (!loteSelecionado) return;
-
-    try {
-      const { error } = await InscricoesService.insertInscricao(
-        loteSelecionado,
-        form.getValues(),
-        "card_manual",
-        "pending",
-        undefined,
-        cupomServoCodigo,
-      );
-      if (error) throw error;
-
-      setPaymentMethodUsed("card_manual");
-      setCurrentStep("confirmation");
-    } catch (error) {
-      console.error("Erro ao processar inscrição:", error);
-      toast({
-        title: "Erro ao processar inscrição",
-        description: getInscricaoErrorMessage(error),
-        variant: "destructive",
-      });
-    }
-  };
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -293,11 +309,14 @@ export const useOikosForm = () => {
     setCupomInfo(null);
     setCupomServoCode("");
     setCupomServoCodigo(null);
-    setPaymentMethodUsed(null);
   };
 
   const handleBackFromPaymentToForm = () => {
-    if (isLoteEspecialSelected()) {
+    if (loteSelecionado === AGE_RULES.SPECIAL_LOTE_ID) {
+      setCurrentStep("form");
+      setComprovanteFile(null);
+      setComprovantePreview(null);
+    } else if (isLoteEspecialSelected()) {
       setCurrentStep("cupom_validation");
     } else {
       setCurrentStep("cupom_servo");
@@ -388,7 +407,6 @@ export const useOikosForm = () => {
     handleCupomValidation,
     handleCupomPayment,
     handlePixPayment,
-    handleCardManualPayment,
     handleFileChange,
     clearComprovante,
     handleBackToForm,

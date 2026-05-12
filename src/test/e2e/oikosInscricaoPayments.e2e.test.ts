@@ -90,7 +90,7 @@ const insertWithAtomicServoDeactivation = vi.fn(
   async (
     loteId: number,
     formData: Parameters<typeof InscricoesService.insertInscricao>[1],
-    method: "pix" | "cupom" | "card_manual",
+    method: "pix" | "cupom",
     status: string,
     cupomInfo?: Parameters<typeof InscricoesService.insertInscricao>[4],
     codigoServo?: string | null,
@@ -117,7 +117,7 @@ const insertWithAtomicServoDeactivation = vi.fn(
 const servoCoupons = new Map<string, { ativo: boolean }>();
 const inscricoes: ReturnType<typeof mapFormToInscricao>[] = [];
 
-describe("E2E - inscrição OIKOS com PIX, card_manual e cupom SERVOAMIGO", () => {
+describe("E2E - inscrição OIKOS com PIX e cupom SERVOAMIGO", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(console, "error").mockImplementation(() => undefined);
@@ -153,24 +153,6 @@ describe("E2E - inscrição OIKOS com PIX, card_manual e cupom SERVOAMIGO", () =
       nome: "Maria Oliveira",
     });
     expect(result.current.paymentMethodUsed).toBe("pix");
-    expect(result.current.currentStep).toBe("confirmation");
-  });
-
-  it("simula inscrição com card_manual e status pending", async () => {
-    const { result } = renderHook(() => useOikosForm());
-    fillRequiredForm(result);
-
-    await act(async () => {
-      await result.current.handleCardManualPayment();
-    });
-
-    expect(inscricoes).toHaveLength(1);
-    expect(inscricoes[0]).toMatchObject({
-      metodo_pagamento: "card_manual",
-      status: "pending",
-      nome: "Maria Oliveira",
-    });
-    expect(result.current.paymentMethodUsed).toBe("card_manual");
     expect(result.current.currentStep).toBe("confirmation");
   });
 

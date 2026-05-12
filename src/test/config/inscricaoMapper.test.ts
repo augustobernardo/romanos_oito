@@ -91,11 +91,10 @@ describe("mapFormToInscricao", () => {
     expect(result.lote_especial).toBe(false);
   });
 
-  it("define metodo_pagamento como card_manual", () => {
-    const result = mapFormToInscricao(1, validFormData, "card_manual", "pending");
-    expect(result.metodo_pagamento).toBe("card_manual");
-    expect(result.status).toBe("pending");
-    expect(result.lote_especial).toBe(false);
+  it("define metodo_pagamento como pix", () => {
+    const result = mapFormToInscricao(1, validFormData, "pix", "confirmado");
+    expect(result.metodo_pagamento).toBe("pix");
+    expect(result.status).toBe("confirmado");
   });
 
   it("define campos de titular e comprovante quando cupomInfo é fornecido", () => {
