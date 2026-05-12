@@ -12,12 +12,11 @@ import type { FormData } from "./types";
 
 interface Props {
   form: UseFormReturn<FormData>;
+  maxDate?: string;
+  minDate?: string;
 }
 
-// 17 until september 2026
-const MIN_AGE_BIRTHDATE = "2009-09-30";
-
-const DadosPessoaisSection = ({ form }: Props) => (
+const DadosPessoaisSection = ({ form, maxDate, minDate }: Props) => (
   <>
     <FormField
       control={form.control}
@@ -41,7 +40,7 @@ const DadosPessoaisSection = ({ form }: Props) => (
           <FormItem>
             <FormLabel className="font-bold">Data de Nascimento: *</FormLabel>
             <FormControl>
-              <Input type="date" max={MIN_AGE_BIRTHDATE} {...field} />
+              <Input type="date" max={maxDate} min={minDate} {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>

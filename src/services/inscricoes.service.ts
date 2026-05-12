@@ -68,7 +68,7 @@ export const InscricoesService = {
       tamanhoCamisa: string;
       expectativaOikos: string;
     },
-    method: "pix" | "cupom" | "card_manual",
+    method: "pix" | "cupom",
     status: string,
     cupomInfo?: { nomeTitular: string | null; comprovanteUrl: string | null },
     codigoServo?: string | null,

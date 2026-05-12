@@ -1,6 +1,7 @@
 import type { TablesInsert } from "@/integrations/supabase/types";
 import { OIKOS_EVENT_ID } from "./constants";
-import { calculateAge } from "@/utils/dateUtils";
+import { calculateAge, calculateAgeAtReferenceDate } from "@/utils/dateUtils";
+import { AGE_RULES } from "./ageRules";
 
 type FormValues = {
   nome: string;
@@ -32,11 +33,30 @@ type FormValues = {
 export const mapFormToInscricao = (
   loteId: number,
   formData: FormValues,
-  method: "pix" | "cupom" | "card_manual",
+  method: "pix" | "cupom",
   status: string,
   cupomInfo?: { nomeTitular: string | null; comprovanteUrl: string | null },
   codigoServo?: string | null,
-): TablesInsert<"inscricoes"> => ({
+): TablesInsert<"inscricoes"> => {
+  const isSpecial = loteId === AGE_RULES.SPECIAL_LOTE_ID;
+  const referenceDate = isSpecial
+    ? AGE_RULES.SPECIAL_REFERENCE_DATE
+    : AGE_RULES.DEFAULT_REFERENCE_DATE;
+
+  const ageAtRef = calculateAgeAtReferenceDate(formData.dataNascimento, referenceDate);
+
+  const ageValid = isSpecial
+    ? ageAtRef === AGE_RULES.SPECIAL_MIN_AGE
+    : ageAtRef >= AGE_RULES.DEFAULT_MIN_AGE;
+
+  if (!ageValid) {
+    const message = isSpecial
+      ? "Para este lote, é necessário ter exatamente 16 anos em 07/06/2026."
+      : "É necessário ter no mínimo 17 anos completos para realizar esta inscrição.";
+    throw new Error(message);
+  }
+
+  return ({
   lote_id: loteId,
   evento_id: OIKOS_EVENT_ID,
   nome: formData.nome,
@@ -70,4 +90,5 @@ export const mapFormToInscricao = (
   titular_especial: cupomInfo?.nomeTitular || null,
   comprovante_url: cupomInfo?.comprovanteUrl || null,
   ...(codigoServo ? ({ codigo_servo: codigoServo } as Record<string, string>) : {}),
-});
+  });
+};
