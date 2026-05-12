@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PixCopyButton } from "@/components/ui/pix-copy-button";
-import qrCodePix from "@/assets/qr_code_pix.png";
+import { PixQRCode } from "./PixQRCode";
 import { PIX_KEY, PIX_RECEIVER_NAME } from "@/utils/pix";
 import { WHATSAPP_NUMBER_FORMATTED } from "@/config/constants";
 
@@ -19,6 +19,7 @@ type PaymentCard = "pix" | "cartao";
 
 interface PaymentStepProps {
   isEspecial: boolean;
+  lotePreco: string | null;
   comprovantePreview: string | null;
   comprovanteFile: File | null;
   uploading: boolean;
@@ -35,6 +36,7 @@ interface PaymentStepProps {
 
 export const PaymentStep = ({
   isEspecial,
+  lotePreco,
   comprovantePreview,
   comprovanteFile,
   uploading,
@@ -199,13 +201,7 @@ export const PaymentStep = ({
               </p>
             )}
 
-            <div className="w-full max-w-[300px] aspect-square bg-white flex items-center justify-center">
-              <img
-                src={qrCodePix}
-                className="w-full h-full"
-                alt="QR Code PIX"
-              />
-            </div>
+            <PixQRCode preco={lotePreco} />
 
             <div className="w-full max-w-sm flex flex-col items-center gap-4">
               <p className="text-sm font-medium text-[#393939] text-center">
