@@ -79,9 +79,13 @@ const OikosFormSection = () => {
   }
 
   if (currentStep === "payment") {
+    const lotePreco =
+      lotes.find((l) => l.id === loteSelecionado)?.preco ?? null;
+
     return (
       <PaymentStep
         isEspecial={isLoteEspecialSelected()}
+        lotePreco={lotePreco}
         comprovantePreview={comprovantePreview}
         comprovanteFile={comprovanteFile}
         uploading={uploading}
