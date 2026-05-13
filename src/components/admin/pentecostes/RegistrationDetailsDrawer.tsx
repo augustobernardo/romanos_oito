@@ -20,6 +20,7 @@ import { handleViewComprovante, handleDownloadComprovante, PENTECOSTE_STORAGE_BU
 import { toast } from "@/components/ui/sonner";
 import { calculateAge } from "@/utils/dateUtils";
 import { Download, Eye, X, Loader2 } from "lucide-react";
+import { statusLabels, DRAWER_STATUS_OPTIONS } from "./statusTransitions";
 import type {
   PentecosteRegistration,
   PentecostePaymentStatus,
@@ -30,22 +31,6 @@ interface RegistrationDetailsDrawerProps {
   open: boolean;
   onClose: () => void;
 }
-
-const nextStatus: Record<PentecostePaymentStatus, PentecostePaymentStatus[]> = {
-  pending: ["awaiting_confirmation"],
-  awaiting_confirmation: ["paid", "rejected"],
-  paid: [],
-  rejected: ["awaiting_confirmation"],
-  manual_card_payment: ["paid"],
-};
-
-const statusLabels: Record<PentecostePaymentStatus, string> = {
-  pending: "Pendente",
-  awaiting_confirmation: "Aguardando",
-  paid: "Pago",
-  rejected: "Rejeitado",
-  manual_card_payment: "Cartão Manual",
-};
 
 export const RegistrationDetailsDrawer = ({
   registration,
@@ -76,16 +61,18 @@ export const RegistrationDetailsDrawer = ({
       queryClient.invalidateQueries({ queryKey: ["pentecoste-metrics"] });
     },
     onError: (err) => {
-      toast.error(
-        err instanceof Error ? err.message : "Erro ao atualizar status"
-      );
+      const message =
+        err instanceof Error
+          ? err.message
+          : typeof err === "object" && err !== null && "message" in err
+            ? String((err as { message: unknown }).message)
+            : "Erro ao atualizar status";
+      toast.error(message);
     },
   });
 
   if (!registration) return null;
 
-  const availableStatuses =
-    nextStatus[registration.payment_status] ?? [];
   const isUnderage = calculateAge(registration.date_of_birth) < 18;
 
   const loadProof = async () => {
@@ -237,43 +224,41 @@ export const RegistrationDetailsDrawer = ({
               </dl>
 
               {/* Status update */}
-              {availableStatuses.length > 0 && (
-                <div className="mt-3 flex items-center gap-2">
-                  <Select
-                    value={newStatus || undefined}
-                    onValueChange={(v) =>
-                      setNewStatus(v as PentecostePaymentStatus)
+              <div className="mt-3 flex items-center gap-2">
+                <Select
+                  value={newStatus || undefined}
+                  onValueChange={(v) =>
+                    setNewStatus(v as PentecostePaymentStatus)
+                  }
+                >
+                  <SelectTrigger className="flex-1 text-xs">
+                    <SelectValue placeholder="Alterar status..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DRAWER_STATUS_OPTIONS.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {statusLabels[s]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  size="sm"
+                  disabled={!newStatus || statusMutation.isPending}
+                  onClick={() => {
+                    if (newStatus) {
+                      statusMutation.mutate(newStatus);
+                      setNewStatus("");
                     }
-                  >
-                    <SelectTrigger className="flex-1 text-xs">
-                      <SelectValue placeholder="Alterar status..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableStatuses.map((s) => (
-                        <SelectItem key={s} value={s}>
-                          {statusLabels[s]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    size="sm"
-                    disabled={!newStatus || statusMutation.isPending}
-                    onClick={() => {
-                      if (newStatus) {
-                        statusMutation.mutate(newStatus);
-                        setNewStatus("");
-                      }
-                    }}
-                  >
-                    {statusMutation.isPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      "Atualizar"
-                    )}
-                  </Button>
-                </div>
-              )}
+                  }}
+                >
+                  {statusMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "Atualizar"
+                  )}
+                </Button>
+              </div>
             </section>
 
             {/* Payment proof */}
